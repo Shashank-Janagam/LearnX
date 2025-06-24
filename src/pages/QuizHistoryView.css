@@ -1,0 +1,105 @@
+/* QuizHistoryView.css - LearnX Theme (based on Quiz.css) */
+
+.quiz-history-view {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: var(--secondary-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: var(--text-light);
+}
+
+.quiz-history-view h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: var(--accent-color);
+}
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 10vh;
+  }
+
+  .logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 0.5rem;
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: white;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+  }
+.quiz-history-view p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.question-card {
+  background: var(--primary-bg);
+  padding: 1.5rem;
+  border: 1px solid #30363d;
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+}
+
+.question-card h4 {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.question-card div {
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+  transition: var(--transition);
+}
+
+.question-card div.correct {
+  background-color: rgb(100, 181, 100);
+  color: white;
+}
+
+.question-card div.incorrect {
+  background-color: rgb(247, 103, 103);
+  color: white;
+  
+}
+
+.question-card div.neutral {
+  background-color: #1f2937;
+}
+
+.question-card small {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+@media screen and (max-width: 768px) {
+  .quiz-history-view {
+    padding: 1rem;
+  }
+
+  .question-card h4 {
+    font-size: 1rem;
+  }
+
+  .question-card div {
+    font-size: 0.9rem;
+  }
+}

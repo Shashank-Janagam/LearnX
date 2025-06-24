@@ -1,0 +1,400 @@
+/* Profile.css - LearnX Themed */
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --border: #21262d;
+  --accent: #7f5af0;
+  --text-primary: #c9d1d9;
+  --text-muted: #8b949e;
+  --gold: #ffd700;
+  --green: #28a745;
+  --radius: 0.75rem;
+}
+
+/* Layout */
+.learnx-profile-container {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+.learnx-profile-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem ;
+  margin: 0;
+}
+
+.learnx-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: auto;
+}
+.password-update-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.password-update-form input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: var(--secondary-bg);
+  color: var(--text-light);
+}
+
+.password-update-form button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.learnx-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.learnx-logo-badge {
+  background-color: var(--accent);
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+}
+
+.learnx-app-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.learnx-header-right .learnx-portal-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.learnx-profile-main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.learnx-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.learnx-left-column,
+.learnx-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Profile Card */
+.learnx-profile-card,
+.learnx-stats-card,
+.learnx-recent-quiz-card,
+.learnx-settings-card,
+.learnx-actions-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+}
+.info{
+    color: white;
+}
+
+.learnx-profile-header-section {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.learnx-avatar-wrapper {
+  position: relative;
+}
+
+.learnx-avatar-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  background-color: white;
+}
+
+.learnx-avatar-icon {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background-color: var(--accent);
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.learnx-profile-info h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.learnx-info-details {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+}
+
+.learnx-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+.learnx-role-badge {
+  background-color: var(--accent);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+/* Stats Card */
+.learnx-stats-card h3,
+.learnx-recent-quiz-card h3,
+.learnx-settings-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.learnx-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.learnx-stat-box {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.learnx-stat-box span {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+/* Recent Quizzes */
+.learnx-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.learnx-recent-item {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border 0.2s;
+}
+
+.learnx-recent-item:hover {
+  border-color: var(--accent);
+}
+
+.learnx-recent-info h4 {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.learnx-recent-score {
+  text-align: right;
+  font-weight: bold;
+}
+
+/* Settings */
+.learnx-settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.learnx-settings-button {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  transition: border 0.2s;
+}
+
+.learnx-settings-button:hover {
+  border-color: var(--accent);
+}
+
+.learnx-settings-button small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* Toggle Switch */
+.learnx-notification-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.learnx-notif-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.learnx-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background-color: var(--border);
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.learnx-enabled {
+  background-color: var(--accent);
+}
+
+.learnx-toggle-circle {
+  background-color: white;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  transition: transform 0.2s;
+}
+
+.learnx-enabled .learnx-toggle-circle {
+  transform: translateX(20px);
+}
+
+/* Actions */
+.learnx-primary-action {
+  background-color: var(--accent);
+  color: white;
+  font-weight: 500;
+  border: none;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.learnx-primary-action:hover {
+  background-color: #6c4fd0;
+}
+
+.learnx-secondary-action {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  width: 100%;
+  transition: border 0.2s;
+}
+
+.learnx-secondary-action:hover {
+  border-color: var(--accent);
+}
+
+/* Icons */
+.learnx-icon-sm {
+  width: 20px;
+  height: 20px;
+}
+
+.learnx-icon-xs {
+  width: 12px;
+  height: 12px;
+}
+
+.learnx-icon-white {
+  color: white;
+}
+
+.learnx-purple {
+  color: var(--accent);
+}
+
+.learnx-gold {
+  color: var(--gold);
+}
+
+.learnx-green {
+  color: var(--green);
+}
+
+
+  .logo-container {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 10vh;
+  }
+
+  .logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 0.5rem;
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: white;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+  }
