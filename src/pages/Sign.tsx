@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Moon, Sun, Zap,User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Home from './Home.tsx';
-import Login from './Login.tsx';
+// import Login from './Login.tsx';
 
 
 import './Login.css';
-import { set } from 'mongoose';
+// import { set } from 'mongoose';
 
 const Sign = () => {
 
@@ -18,7 +18,7 @@ const Sign = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [userName,setUserName]=useState('')
+  // const [userName,setUserName]=useState('')
   const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();

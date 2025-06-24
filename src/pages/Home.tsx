@@ -4,16 +4,16 @@ import './Home.css';
 import { useNavigate } from 'react-router-dom';
 import './Quiz.tsx';
 import './Profile.tsx'
-import Login from './Login.tsx';
+// import Login from './Login.tsx';
 import './QuizHistoryView.tsx';
 
 import axios from 'axios';
-import { set } from 'mongoose';
+// import { set } from 'mongoose';
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [queries, setQueries] = useState([]);
+  // const [queries, setQueries] = useState([]);
   const [userName, setUserName] = useState('');
   const [email,setEmail]=useState('');
   const [userID,setUserId]=useState('');
