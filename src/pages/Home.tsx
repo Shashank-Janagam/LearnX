@@ -1,38 +1,31 @@
-import React, { useState, useEffect,useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, User, Sparkles } from 'lucide-react';
 import './Home.css';
 import { useNavigate } from 'react-router-dom';
-import './Quiz.tsx';
-import './Profile.tsx'
-// import Login from './Login.tsx';
-import './QuizHistoryView.tsx';
-
 import axios from 'axios';
-// import { set } from 'mongoose';
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  // const [queries, setQueries] = useState([]);
   const [userName, setUserName] = useState('');
-  const [email,setEmail]=useState('');
-  const [userID,setUserId]=useState('');
+  const [email, setEmail] = useState('');
+  const [userID, setUserId] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [topics, setTopics] = useState<string[]>([]); // Store previous topics
+  const [topics, setTopics] = useState<string[]>([]);
+
   const historyRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  
+
+  // Show sidebar when mouse near edge
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientX <= 10) {
-        setIsHistoryOpen(true);
-      }
+      if (e.clientX <= 10) setIsHistoryOpen(true);
     };
-
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Hide sidebar when clicked outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -44,74 +37,55 @@ function Home() {
         setIsProfileMenuOpen(false);
       }
     };
-
     document.addEventListener('mousemove', handleClickOutside);
     return () => document.removeEventListener('mousemove', handleClickOutside);
   }, [isHistoryOpen]);
 
-useEffect(() => {
-  const storedName = sessionStorage.getItem('userName');
-  if (storedName) setUserName(storedName);
-  const storedEmail=sessionStorage.getItem('userEmail');
-  if(storedEmail) setEmail(storedEmail);
-  const storedID=sessionStorage.getItem('userID');
-  if(storedID) setUserId(storedID);
+  // Load user data
+  useEffect(() => {
+    const storedName = sessionStorage.getItem('userName');
+    const storedEmail = sessionStorage.getItem('userEmail');
+    const storedID = sessionStorage.getItem('userID');
 
-  if (!storedEmail){
-    navigate('/');
-  }
-}, []);
+    if (storedName) setUserName(storedName);
+    if (storedEmail) setEmail(storedEmail);
+    if (storedID) setUserId(storedID);
 
-useEffect(() => {
-  document.title = `LearnX | ${userName}`;
-}, [userName]);
+    if (!storedEmail) navigate('/');
+  }, [navigate]);
+
+  // Set page title
+  useEffect(() => {
+    document.title = `LearnX | ${userName}`;
+  }, [userName]);
+
+  // Fetch topic history
+  useEffect(() => {
+    const fetchTopics = async () => {
+      const userID = sessionStorage.getItem('userID');
+      if (!userID) return;
+
+      try {
+        const res = await axios.get(`http://localhost:5000/history/${userID}`);
+        const fetchedTopics = res.data.topics || [];
+        setTopics(fetchedTopics);
+        sessionStorage.setItem('topics', JSON.stringify(fetchedTopics));
+      } catch (error) {
+        console.error('❌ Failed to fetch topics from DB:', error);
+      }
+    };
+    fetchTopics();
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
-
     navigate('/');
-
   };
 
-useEffect(() => {
-  const fetchTopics = async () => {
-    const userID = sessionStorage.getItem('userID');
-
-    if (!userID) return;
-
-    // Try getting from localStorage
-    // const localTopics = sessionStorage.getItem('topics');
-
-    // if (localTopics) {
-    //   setTopics(JSON.parse(localTopics));
-    // } else {
-      try {
-        const res = await axios.get(`http://localhost:5000/history/${userID}`);
-        const fetchedTopics = res.data.topics || [];
-
-        // Save in both state and localStorage
-        setTopics(fetchedTopics);
-        sessionStorage.setItem('topics', JSON.stringify(fetchedTopics||[]));
-      } catch (error) {
-        console.error('❌ Failed to fetch topics from DB:', error);
-      }
-    
+  const handleHistoryClick = (topic: string) => {
+    navigate('/QuizHistoryView', { state: { userID, topic } });
   };
-
-  fetchTopics();
-}, []);
-
-const handleHistoryClick = async (topic: string) => {
-  try {
-    // const res = await axios.get(`http://localhost:5000/history/${userID}/${topic}`);
-    // console.log('Fetched result:', res.data);
-    navigate('/QuizHistoryView', { state: { userID,topic } });
-  } catch (err) {
-    console.error('Failed to load result:', err);
-  }
-};
-
 
   const handleProfileClick = () => {
     setIsProfileMenuOpen(!isProfileMenuOpen);
@@ -119,125 +93,81 @@ const handleHistoryClick = async (topic: string) => {
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (searchQuery.trim()) {
-      try {
-        // const res = await axios.post('http://localhost:5000/api/queries', {
-        // topic: searchQuery,
-        // userID: userID,
-        // email: email
-        // });
-
-        // setQueries([res.data, ...queries]);
-        setSearchQuery('');
-     navigate('/Quiz', {
+      navigate('/Quiz', {
         state: {
           topic: searchQuery,
           userID,
           email
         }
-          });
-        
-      } catch (error) {
-        console.error('❌ Error submitting query:', error);
-      }
+      });
+      setSearchQuery('');
     }
   };
 
-  // useEffect(() => {
-  //   const fetchQueries = async () => {
-  //     try {
-  //       const res = await axios.get('http://localhost:5000/api/queries',{
-  //         params:{userID:userID}
-  //       });
-  //       setQueries(res.data);
-  //     } catch (error) {
-  //       console.error('❌ Error fetching queries:', error);
-  //     }
-  //   };
-
-  //   fetchQueries();
-  // }, []);
-
   const navigateToProfile = () => {
     navigate('/Profile');
-    console.log('Navigation to Profile page');
     setIsProfileMenuOpen(false);
   };
 
   return (
     <div className="home-container">
-      {/* Header */}
       <header className="header">
-        {/* Logo */}
         <div className="logo-container">
           <div className="logo-icon">
             <span className="logo-text">LearnX</span>
           </div>
         </div>
 
-        {/* Profile Icon */}
         <div className="profile-wrapper">
           <button className="profile-button" onClick={handleProfileClick}>
             <User className="profile-icon" />
           </button>
 
-          {/* Profile Dropdown */}
           {isProfileMenuOpen && (
-            <div className="profile-dropdown"        
-  
-
->
-              <button onClick={navigateToProfile} className="profile-dropdown-item">
-                View Profile
-              </button>
+            <div className="profile-dropdown">
+              <button onClick={navigateToProfile} className="profile-dropdown-item">View Profile</button>
               <button className="profile-dropdown-item">Settings</button>
-              <button className="profile-dropdown-item"  onClick={() => setIsHistoryOpen(true)}>History</button>
+              <button className="profile-dropdown-item" onClick={() => setIsHistoryOpen(true)}>History</button>
               <div className="profile-dropdown-separator">
-                <button className="profile-dropdown-item"   onClick={handleLogout}>
-                  Sign Out</button>
+                <button className="profile-dropdown-item" onClick={handleLogout}>Sign Out</button>
               </div>
             </div>
           )}
         </div>
       </header>
-          <div
-            ref={historyRef}
-            className={`history-sidebar ${isHistoryOpen ? 'open' : ''}`}
-          >
-            <div className='logos'>
-          <div className="logo-container" id="slider">
-          <div className="logo-icon">
-            <span className="logo-text" >LearnX</span>
-          </div>
-        </div>
-            <h2 className="history-title" >Previous Topics</h2>
-            </div>
-  <div className="history-divider" />
-            <div className="topic-list">
-              {topics.map((topic, index) => (
-                <button
-                  key={index}
-                  className="topic-item"
-                  onClick={() => handleHistoryClick(topic)}
-                  title={topic} // shows full topic on hover
-                >
-                  {topic}
-                </button>
-              ))}
-            </div>
-          </div>
 
-      {/* Main Content */}
+      <div ref={historyRef} className={`history-sidebar ${isHistoryOpen ? 'open' : ''}`}>
+        <div className='logos'>
+          <div className="logo-container" id="slider">
+            <div className="logo-icon">
+              <span className="logo-text">LearnX</span>
+            </div>
+          </div>
+          <h2 className="history-title">Previous Topics</h2>
+        </div>
+        <div className="history-divider" />
+        <div className="topic-list">
+          {topics.map((topic, index) => (
+            <button
+              key={index}
+              className="topic-item"
+              onClick={() => handleHistoryClick(topic)}
+              title={topic}
+            >
+              {topic}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <main className="main-content">
         <div className="hero-container">
-          {/* Hero Section */}
           <div className="hero-text-container">
             <div className="hero-title-wrapper">
               <Sparkles className="hero-icon" />
               <h1 className="hero-title">
-                  Welcome, {userName} 👋
-
+                Welcome, {userName} 👋
                 What would you like to <span className="highlight-text">learn</span> today?
               </h1>
             </div>
@@ -246,7 +176,6 @@ const handleHistoryClick = async (topic: string) => {
             </p>
           </div>
 
-          {/* Search Bar */}
           <form onSubmit={handleSearchSubmit} className="search-form">
             <div className="search-wrapper">
               <input
@@ -261,8 +190,6 @@ const handleHistoryClick = async (topic: string) => {
               </button>
             </div>
           </form>
-
-         
         </div>
       </main>
     </div>

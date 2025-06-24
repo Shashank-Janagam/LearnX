@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Quiz.css';
-import './Home.tsx';
 
 interface MCQOption {
   text: string;
@@ -19,32 +18,49 @@ function Quiz() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { topic, userID, email } = state || {};
-  const [report, setReport] = useState<string>(''); // New state
 
   const [mcqs, setMcqs] = useState<MCQ[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({});
   const [showResults, setShowResults] = useState<{ [key: number]: boolean }>({});
-  const [error, setError] = useState<string>('');
-const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [error, setError] = useState('');
+  const [report, setReport] = useState('');
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [queries, setQueries] = useState([]);
 
-  const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 });
+  const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 }); // minutes
   const [showConfig, setShowConfig] = useState(true);
 
   useEffect(() => {
+    const storedEmail = sessionStorage.getItem('userEmail');
+    if (!storedEmail) navigate('/');
+  }, [navigate]);
 
-    const storedEmail=sessionStorage.getItem('userEmail');
-    if (!storedEmail){
-      navigate('/');
+  useEffect(() => {
+    document.title = `LearnX | ${topic}`;
+  }, [topic]);
+
+  useEffect(() => {
+    if (!topic) {
+      setError('No topic provided');
+      setLoading(false);
     }
-  }, []);
-useEffect(() => {
-  document.title = `LearnX | ${topic}`;
-}, [topic]);
-  const fetchMCQs = async (count: number) => {
-    setTimeLeft(quizConfig.timeLimit * 60); // convert minutes to seconds
+  }, [topic]);
 
+  useEffect(() => {
+    if (!showConfig && timeLeft > 0 && mcqs.length > 0 && Object.keys(showResults).length === 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          if (prevTime === 1) handleSubmitAll();
+          return prevTime - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [showConfig, timeLeft, mcqs.length, showResults]);
+
+  const fetchMCQs = async (count: number) => {
+    setTimeLeft(quizConfig.timeLimit * 60); // minutes to seconds
     setLoading(true);
     try {
       const [res, res1] = await Promise.all([
@@ -53,50 +69,21 @@ useEffect(() => {
       ]);
       setMcqs(res.data.mcqs);
       setQueries([res1.data, ...queries]);
-
     } catch (err) {
-      console.error('❌ Error fetching MCQs:', err);
       setError('Failed to generate questions. Using sample data...');
-      const sampleMCQs = generateSampleMCQs(topic);
-      setMcqs(sampleMCQs);
+      setMcqs(generateSampleMCQs(topic));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!topic) {
-      setError('No topic provided');
-      setLoading(false);
+  const saveQuizResult = async (email: string, topic: string, score: number) => {
+    try {
+      await axios.post('http://localhost:5000/api/profile/quiz', { email, topic, score });
+    } catch (error) {
+      console.error('Error saving quiz:', error);
     }
-  }, [topic]);
-  useEffect(() => {
-  if (!showConfig && timeLeft > 0 && mcqs.length > 0 && Object.keys(showResults).length === 0) {
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime === 1) {
-          handleSubmitAll();
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }
-}, [showConfig, timeLeft, mcqs, showResults]);
-
-
-const saveQuizResult = async (email, topic, score) => {
-  try {
-    const response = await axios.post('http://localhost:5000/api/profile/quiz', {
-      email,
-      topic,
-      score
-    });
-    console.log('Quiz saved:', response.data);
-  } catch (error) {
-    console.error('Error saving quiz:', error);
-  }
-};
+  };
 
   const generateSampleMCQs = (topicName: string): MCQ[] => [
     {
@@ -125,16 +112,16 @@ const saveQuizResult = async (email, topic, score) => {
     if (Object.keys(showResults).length > 0) return;
     setSelectedAnswers((prev) => ({ ...prev, [qIndex]: oIndex }));
   };
-const calculateScore = () => {
-  let correct = 0;
-  mcqs.forEach((mcq, index) => {
-    if (selectedAnswers[index] !== undefined) {
-      const selectedOption = mcq.options[selectedAnswers[index]];
+
+  const calculateScore = () => {
+    let correct = 0;
+    mcqs.forEach((mcq, index) => {
+      const selectedIndex = selectedAnswers[index];
+      const selectedOption = mcq.options[selectedIndex];
       if (selectedOption?.isCorrect) correct++;
-    }
-  });
-  return correct;
-};
+    });
+    return correct;
+  };
 
   const handleSubmitAll = async () => {
     const allResults: { [key: number]: boolean } = {};
@@ -143,60 +130,48 @@ const calculateScore = () => {
     });
     setShowResults(allResults);
 
-      const responses = mcqs.map((mcq, index) => {
-    const selectedIndex = selectedAnswers[index];
-    const selectedOption = mcq.options[selectedIndex];
-    return {
-      question: mcq.question,
-      score:calculateScore(),
-      selectedOption: selectedOption?.text || '',
-      correctOption: mcq.options.find((opt) => opt.isCorrect)?.text || '',
-      explanation: mcq.explanation || '',
-      isCorrect: selectedOption?.isCorrect || false,
-    };
-  });
+    const responses = mcqs.map((mcq, index) => {
+      const selectedIndex = selectedAnswers[index];
+      const selectedOption = mcq.options[selectedIndex];
+      return {
+        question: mcq.question,
+        score: calculateScore(),
+        selectedOption: selectedOption?.text || '',
+        correctOption: mcq.options.find((opt) => opt.isCorrect)?.text || '',
+        explanation: mcq.explanation || '',
+        isCorrect: selectedOption?.isCorrect || false,
+      };
+    });
 
     const score = calculateScore();
+    try {
+      const result = await axios.post('http://localhost:5000/quiz/report', {
+        topic,
+        score,
+        total: mcqs.length,
+        responses,
+      });
 
+      const generatedReport = result.data.report;
+      setReport(generatedReport);
 
+      await axios.post('http://localhost:5000/quiz/save-result', {
+        userID,
+        email,
+        topic,
+        score,
+        total: mcqs.length,
+        responses,
+        report: generatedReport,
+      });
 
-   const result =await axios.post('http://localhost:5000/quiz/report', {
-      topic,
-      score,
-      total: mcqs.length,
-      responses
-    });
- const generatedReport = result.data.report;
-setReport(generatedReport);
-
-
-  try {
-    await axios.post('http://localhost:5000/quiz/save-result', {
-      userID,
-      email,
-      topic,
-      score,
-      total: mcqs.length,
-      responses,
-      report:generatedReport,
-    });
-
-    saveQuizResult(sessionStorage.getItem("userEmail"), topic, (score/mcqs.length)*100);
-
- 
-    console.log('✅ Quiz result saved');
-  } catch (err) {
-    console.error('❌ Failed to save quiz result:', err);
-  }
-
-
-
-
+      saveQuizResult(email, topic, (score / mcqs.length) * 100);
+    } catch (err) {
+      console.error('❌ Failed to save quiz result:', err);
+    }
   };
 
   const handleBackToHome = () => navigate('/Home');
-
-
 
   const totalAnswered = Object.keys(showResults).length;
   const score = calculateScore();
@@ -219,28 +194,19 @@ setReport(generatedReport);
     <div className="quiz-container">
       <header className="quiz-header">
         <div className="header-content">
-        <div className="logo-container">
-          <div className="logo-icon">
-            <span className="logo-text">LearnX</span>
+          <div className="logo-container">
+            <div className="logo-icon">
+              <span className="logo-text">LearnX</span>
+            </div>
           </div>
-        </div>
           <div className="quiz-info">
-
             <span className="topic-badge">{topic}</span>
-            {totalAnswered > 0 && (
-              <span className="score-badge">Score: {score}/{mcqs.length}</span>
-            )}
-
-
+            {totalAnswered > 0 && <span className="score-badge">Score: {score}/{mcqs.length}</span>}
             {!showConfig && mcqs.length > 0 && (
-  <span className="timer-badge">
-    Time Left: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-  </span>
-
-
-  
-)}
-
+              <span className="timer-badge">
+                Time Left: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -249,80 +215,73 @@ setReport(generatedReport);
         {showConfig ? (
           <div className="config-section">
             <div className="config-card">
-  <h2>Configure Your Quiz</h2>
+              <h2>Configure Your Quiz</h2>
+              <div className="scroll-picker-section">
+                <label>Number of Questions</label>
+                <select
+                  value={quizConfig.count}
+                  onChange={(e) =>
+                    setQuizConfig({ ...quizConfig, count: Number(e.target.value) })
+                  }
+                >
+                  {[...Array(20)].map((_, i) => (
+                    <option key={i} value={i + 1}>
+                      {i + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-  <div className="scroll-picker-section">
-    <label>Number of Questions</label>
-    <div className="scroll-picker">
-      <select
-        value={quizConfig.count}
-        onChange={(e) =>
-          setQuizConfig({ ...quizConfig, count: Number(e.target.value) })
-        }
-      >
-        {[...Array(20)].map((_, i) => (
-          <option key={i} value={i + 1}>
-            {i + 1} 
-          </option>
-        ))}
-      </select>
-    </div>
-  </div>
+              <div className="scroll-picker-section">
+                <label>Time Limit</label>
+                <div className="time-picker-container">
+                  <select
+                    value={Math.floor(quizConfig.timeLimit / 60)}
+                    onChange={(e) =>
+                      setQuizConfig({
+                        ...quizConfig,
+                        timeLimit: Number(e.target.value) * 60 + (quizConfig.timeLimit % 60),
+                      })
+                    }
+                  >
+                    {[...Array(6)].map((_, i) => (
+                      <option key={i} value={i}>
+                        {i} hr
+                      </option>
+                    ))}
+                  </select>
 
-  <div className="scroll-picker-section">
-    <label>Time Limit</label>
-    <div className="time-picker-container">
-      <select
-        value={Math.floor(quizConfig.timeLimit / 60)}
-        onChange={(e) =>
-          setQuizConfig({
-            ...quizConfig,
-            timeLimit:
-              Number(e.target.value) * 60 +
-              (quizConfig.timeLimit % 60),
-          })
-        }
-      >
-        {[...Array(6)].map((_, i) => (
-          <option key={i} value={i}>
-            {i} hr
-          </option>
-        ))}
-      </select>
+                  <span>:</span>
 
-      <span>:</span>
+                  <select
+                    value={quizConfig.timeLimit % 60}
+                    onChange={(e) =>
+                      setQuizConfig({
+                        ...quizConfig,
+                        timeLimit:
+                          Math.floor(quizConfig.timeLimit / 60) * 60 + Number(e.target.value),
+                      })
+                    }
+                  >
+                    {[...Array(60)].map((_, i) => (
+                      <option key={i} value={i}>
+                        {i < 10 ? '0' + i : i} min
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-      <select
-        value={quizConfig.timeLimit % 60}
-        onChange={(e) =>
-          setQuizConfig({
-            ...quizConfig,
-            timeLimit:
-              Math.floor(quizConfig.timeLimit / 60) * 60 +
-              Number(e.target.value),
-          })
-        }
-      >
-        {[...Array(60)].map((_, i) => (
-          <option key={i} value={i}>
-            {i < 10 ? '0' + i : i} min
-          </option>
-        ))}
-      </select>
-    </div>
-  </div>
-
-  <button
-    className="start-button"
-    onClick={() => {
-      setShowConfig(false);
-      fetchMCQs(quizConfig.count);
-    }}
-  >
-    Start Quiz
-  </button>
-</div>
-
+              <button
+                className="start-button"
+                onClick={() => {
+                  setShowConfig(false);
+                  fetchMCQs(quizConfig.count);
+                }}
+              >
+                Start Quiz
+              </button>
+            </div>
           </div>
         ) : loading ? (
           <div className="loading-section">
@@ -346,29 +305,14 @@ setReport(generatedReport);
           <div className="questions-section">
             <div className="questions-header">
               <h2 className="questions-title">Quiz: {topic}</h2>
-                  {Object.keys(showResults).length > 0 && (
-                    <button onClick={handleBackToHome} className="back-button">Try Another Topic   
-                          <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ marginRight: '8px', verticalAlign: 'middle', marginLeft:'5px' }}
-    >
-      <polyline points="1 4 1 10 7 10" />
-      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-    </svg>
-             
-                    </button>
-                  )}
+              {Object.keys(showResults).length > 0 && (
+                <button onClick={handleBackToHome} className="back-button">
+                  Try Another Topic
+                </button>
+              )}
             </div>
 
-          
-                                    {report && (
+            {report && (
               <div className="report-section">
                 <h3>🧠 AI Feedback Report</h3>
                 <p style={{ whiteSpace: 'pre-line' }}>{report}</p>
@@ -381,11 +325,13 @@ setReport(generatedReport);
                   <div className="question-header">
                     <span className="question-number">Question {qIndex + 1}</span>
                     {showResults[qIndex] && (
-                      <span className={`result-badge ${
-                        mcq.options[selectedAnswers[qIndex]]?.isCorrect
-                          ? 'correct'
-                          : 'incorrect'
-                      }`}>
+                      <span
+                        className={`result-badge ${
+                          mcq.options[selectedAnswers[qIndex]]?.isCorrect
+                            ? 'correct'
+                            : 'incorrect'
+                        }`}
+                      >
                         {mcq.options[selectedAnswers[qIndex]]?.isCorrect ? 'Correct!' : 'Incorrect'}
                       </span>
                     )}

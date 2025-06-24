@@ -1,49 +1,25 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Profile.css';
 import axios from 'axios';
-import { useLocation, useNavigate } from 'react-router-dom';
-import './Home.tsx'
-import { 
-  User, Mail, Award, BarChart3, Clock, Settings, Lock, Bell, Edit3,
-  BookOpen, Trophy, Target, GraduationCap
+import { useNavigate } from 'react-router-dom';
+import {
+  User, Mail, Award, BarChart3, Clock, Settings, Lock, Edit3,
+  BookOpen, Trophy, Target
 } from 'lucide-react';
-import { url } from 'inspector';
-import { Navigate } from 'react-router-dom';
-
-
 
 function ProfilePage() {
-    const [showPasswordForm, setShowPasswordForm] = useState(false);
-const [newPassword, setNewPassword] = useState('');
-
-
-  const navigate = useNavigate();
-
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
   const [profileData, setProfileData] = useState(null);
-    const email =sessionStorage.getItem('userEmail');
-// console.log(email);
-//   const profileData = {
-//     name: "Alex Johnson",
-//     email: "alex.johnson@university.edu",
-//     role: "Student",
-//     avatar: "https://images.pexels.com/photos/1559486/pexels-photo-1559486.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-//     stats: {
-//       totalQuizzes: 47,
-//       averageScore: 87.3,
-//       recentTopic: "Advanced React Patterns"
-//     },
-//     recentQuizzes: [
-//       { topic: "JavaScript Fundamentals", score: 92, date: "2 days ago" },
-//       { topic: "CSS Grid & Flexbox", score: 88, date: "5 days ago" },
-//       { topic: "Node.js Basics", score: 84, date: "1 week ago" }
-//     ]
-//   };
+  const email = sessionStorage.getItem('userEmail');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-const response = await axios.get(`http://localhost:5000/api/profile/email/${encodeURIComponent(email)}`);
+        const response = await axios.get(
+          `http://localhost:5000/api/profile/email/${encodeURIComponent(email)}`
+        );
         setProfileData(response.data);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -51,24 +27,26 @@ const response = await axios.get(`http://localhost:5000/api/profile/email/${enco
     };
 
     if (email) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       fetchProfile();
     }
   }, [email]);
-const handlePasswordUpdate = async () => {
-  try {
-await axios.put(`http://localhost:5000/api/profile/update-password`, {
-  email,
-  newPassword,
-});
-    alert('Password updated successfully!');
-    setShowPasswordForm(false);
-    setNewPassword('');
-  } catch (error) {
-    console.error('Password update failed:', error);
-    alert('Error updating password.');
-  }
-};
-  // ✅ Guard clause to avoid accessing profileData before it's loaded
+
+  const handlePasswordUpdate = async () => {
+    try {
+      await axios.put(`http://localhost:5000/api/profile/update-password`, {
+        email,
+        newPassword,
+      });
+      alert('Password updated successfully!');
+      setShowPasswordForm(false);
+      setNewPassword('');
+    } catch (error) {
+      console.error('Password update failed:', error);
+      alert('Error updating password.');
+    }
+  };
+
   if (!profileData) {
     return <div className="loading-text">Loading profile...</div>;
   }
@@ -77,11 +55,11 @@ await axios.put(`http://localhost:5000/api/profile/update-password`, {
     <div className="learnx-profile-container">
       <header className="learnx-profile-header">
         <div className="learnx-header-inner">
-        <div className="logo-container" onClick={() => navigate('/Home')}>
-          <div className="logo-icon">
-            <span className="logo-text">LearnX</span>
+          <div className="logo-container" onClick={() => navigate('/Home')}>
+            <div className="logo-icon">
+              <span className="logo-text">LearnX</span>
+            </div>
           </div>
-        </div>
           <div className="learnx-header-right">
             <div className="learnx-portal-label">
               <User className="learnx-icon-sm" />
@@ -97,7 +75,11 @@ await axios.put(`http://localhost:5000/api/profile/update-password`, {
             <div className="learnx-profile-card">
               <div className="learnx-profile-header-section">
                 <div className="learnx-avatar-wrapper">
-                  <img src="https://cdn.pixabay.com/photo/2024/03/28/18/06/dog-8661433_1280.png" alt="Profile" className="learnx-avatar-img" />
+                  <img
+                    src="https://cdn.pixabay.com/photo/2024/03/28/18/06/dog-8661433_1280.png"
+                    alt="Profile"
+                    className="learnx-avatar-img"
+                  />
                   <div className="learnx-avatar-icon">
                     <User className="learnx-icon-xs" />
                   </div>
@@ -165,50 +147,33 @@ await axios.put(`http://localhost:5000/api/profile/update-password`, {
                 <button className="learnx-settings-button">
                   <Edit3 className="learnx-icon-sm learnx-purple" />
                   <div>
-                    <div className=" info"> Edit Profile</div>
+                    <div className="info"> Edit Profile</div>
                     <small>Update your information</small>
                   </div>
                 </button>
 
-<button
-  className="learnx-settings-button"
-  onClick={() => setShowPasswordForm(!showPasswordForm)}
->
-  <Lock className="learnx-icon-sm learnx-purple" />
-  <div>
-    <div className="info">Change Password</div>
-    <small>Update your password</small>
-  </div>
-</button>
-{showPasswordForm && (
-  <div className="password-update-form">
-    <input
-      type="password"
-      placeholder="New Password"
-      value={newPassword}
-      onChange={(e) => setNewPassword(e.target.value)}
-    />
-    <button onClick={handlePasswordUpdate}>Update</button>
-  </div>
-)}
-
-
-
-                {/* <div className="learnx-notification-toggle">
-                  <div className="learnx-notif-label">
-                    <Bell className="learnx-icon-sm learnx-purple" />
-                    <div>
-                      <div>Notifications</div>
-                      <small>Email & push notifications</small>
-                    </div>
+                <button
+                  className="learnx-settings-button"
+                  onClick={() => setShowPasswordForm(!showPasswordForm)}
+                >
+                  <Lock className="learnx-icon-sm learnx-purple" />
+                  <div>
+                    <div className="info">Change Password</div>
+                    <small>Update your password</small>
                   </div>
-                  <button
-                    onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                    className={`learnx-toggle ${notificationsEnabled ? 'learnx-enabled' : 'learnx-disabled'}`}
-                  >
-                    <span className="learnx-toggle-circle"></span>
-                  </button>
-                </div> */}
+                </button>
+
+                {showPasswordForm && (
+                  <div className="password-update-form">
+                    <input
+                      type="password"
+                      placeholder="New Password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <button onClick={handlePasswordUpdate}>Update</button>
+                  </div>
+                )}
               </div>
             </div>
 

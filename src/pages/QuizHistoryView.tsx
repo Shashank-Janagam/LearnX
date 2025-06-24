@@ -16,6 +16,7 @@ interface QuizResult {
   score: number;
   total: number;
   responses: QuizResponse[];
+  report?: string;
 }
 
 function QuizHistoryView() {
@@ -25,31 +26,28 @@ function QuizHistoryView() {
 
   const [result, setResult] = useState<QuizResult | null>(null);
   const [error, setError] = useState('');
-useEffect(() => {
-  document.title = `LearnX | ${topic}`;
-}, [topic]);
-
 
   useEffect(() => {
+    document.title = `LearnX | ${topic}`;
+  }, [topic]);
 
-    const storedEmail=sessionStorage.getItem('userEmail');
-    if (!storedEmail){
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem('userEmail');
+    if (!storedEmail) {
       navigate('/');
+      return;
     }
-  }, []);
 
-  useEffect(() => {
     if (!userID || !topic) {
       setError('Missing user ID or topic.');
       return;
     }
 
-    
-  
-
     const fetchQuizResult = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/history/${userID}/${topic}`);
+        const res = await axios.get(
+          `http://localhost:5000/history/${userID}/${topic}`
+        );
         setResult(res.data.result);
         console.log('Fetched result:', res.data.result);
       } catch (err) {
@@ -58,15 +56,18 @@ useEffect(() => {
       }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchQuizResult();
-  }, [userID, topic]);
+  }, [navigate, userID, topic]);
 
   if (error) {
     return (
       <div className="quiz-history-view">
         <h2>Error</h2>
         <p>{error}</p>
-        <button onClick={() => navigate('/home')} className="back-button">Back to Home</button>
+        <button onClick={() => navigate('/home')} className="back-button">
+          Back to Home
+        </button>
       </div>
     );
   }
@@ -76,30 +77,26 @@ useEffect(() => {
   }
 
   return (
-
-
-
     <div className="quiz-history-view">
       <header className="quiz-header">
         <div className="header-content">
-        <div className="logo-container">
-          <div className="logo-icon">
-            <span className="logo-text">LearnX</span>
+          <div className="logo-container">
+            <div className="logo-icon">
+              <span className="logo-text">LearnX</span>
+            </div>
           </div>
         </div>
-
-
-
-          </div>
       </header>
+
       <h2>Quiz on: {result.topic}</h2>
       <p>Score: {result.score} / {result.total}</p>
-       {result.report && (
-              <div className="report-section">
-                <h3>🧠 AI Feedback Report</h3>
-                <p style={{ whiteSpace: 'pre-line' }}>{result.report}</p>
-              </div>
-            )}
+
+      {result.report && (
+        <div className="report-section">
+          <h3>🧠 AI Feedback Report</h3>
+          <p style={{ whiteSpace: 'pre-line' }}>{result.report}</p>
+        </div>
+      )}
 
       {result.responses.map((resp, i) => (
         <div key={i} className="question-card">
