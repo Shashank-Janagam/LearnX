@@ -57,7 +57,7 @@ function Quiz() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [showConfig, timeLeft, mcqs.length, showResults]);
+}, [showConfig, timeLeft, mcqs.length, showResults, handleSubmitAll]);
 
   const fetchMCQs = async (count: number) => {
     setTimeLeft(quizConfig.timeLimit * 60); // minutes to seconds
