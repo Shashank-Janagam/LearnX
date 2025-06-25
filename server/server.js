@@ -1,4 +1,4 @@
-// import express from 'express';
+import express from 'express';
 // import mongoose from 'mongoose';
 // import cors from 'cors';
 // import 'dotenv/config'; // ✅ Load environment variables first
@@ -48,21 +48,19 @@
 // // ✅ Start server
 // app.listen(port, () => {
 //   console.log(`🚀 Server running on http://localhost:${port}`);
-// });
-import express from 'express';
+// });import express from 'express';
 import cors from 'cors';
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
+// ✅ Define allowed origins
 const allowedOrigins = [
   'http://localhost:5173',
   'https://getlearnxai.vercel.app'
 ];
 
-// // ✅ Full CORS config
+// ✅ Full CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -76,6 +74,11 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+// ✅ Apply correct CORS middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// ✅ Route
 app.get('/', (req, res) => {
   res.send('Minimal server works!');
 });
