@@ -113,9 +113,9 @@ const Login = () => {
           localStorage.setItem('userEmail', email);
         }
 
-        setTimeout(() => {
+
           navigate('/home');
-        }, 1000);
+
       }
 
     } catch (err) {
