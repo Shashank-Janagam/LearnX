@@ -52,9 +52,9 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // ✅ Register all routes
-app.use('/auth', authRoutes);
-app.use('/quiz', quizRoutes);
-app.use('/api/profile', profileRoutes);
+// app.use('/auth', authRoutes);
+// app.use('/quiz', quizRoutes);
+// app.use('/api/profile', profileRoutes);
 // app.use('/api/queries', queryRoutes);
 // app.use('/history', history);
 
