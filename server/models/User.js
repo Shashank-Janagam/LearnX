@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 // Define the User schema
 const userSchema = new mongoose.Schema({
@@ -49,6 +50,20 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Export the model and explicitly map to 'Users' collection
+// 🔐 Auto-hash password before saving if it has been modified
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// 🧼 Remove password when returning JSON
+userSchema.methods.toJSON = function () {
+  const user = this.toObject();
+  delete user.password;
+  return user;
+};
+
 const User = mongoose.models.User || mongoose.model('User', userSchema, 'Users');
 export default User;
