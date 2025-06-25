@@ -11,7 +11,7 @@ import profileRoutes from './routes/profileRoutes.js';
 const app = express();
 const port = process.env.PORT ||5000;
 
-const mongoURI = 'mongodb://127.0.0.1:27017/learnx'; // ⚠️ Case-sensitive! Use `learnx`, not `LearnX`
+const mongoURI = process.env.MONGO_URI;
 
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
@@ -20,8 +20,10 @@ mongoose.connect(mongoURI, {
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: 'https://getlearnxai.vercel.app/', // 🔁 update with your actual Vercel domain
+  credentials: true
+}));app.use(express.json());
 app.use('/api/queries', queryRoutes); // 👈 register query route
 app.use('/quiz',quizRoutes);
 app.use('/api/profile', profileRoutes);
