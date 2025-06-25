@@ -46,7 +46,7 @@ function QuizHistoryView() {
     const fetchQuizResult = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/history/${userID}/${topic}`
+          `https://learnx-ed1w.onrender.com/history/${userID}/${topic}`
         );
         setResult(res.data.result);
         console.log('Fetched result:', res.data.result);

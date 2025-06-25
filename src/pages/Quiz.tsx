@@ -63,7 +63,7 @@ function Quiz() {
 
     const score = calculateScore();
     try {
-      const result = await axios.post('http://localhost:5000/quiz/report', {
+      const result = await axios.post('https://learnx-ed1w.onrender.com/quiz/report', {
         topic,
         score,
         total: mcqs.length,
@@ -73,7 +73,7 @@ function Quiz() {
       const generatedReport = result.data.report;
       setReport(generatedReport);
 
-      await axios.post('http://localhost:5000/quiz/save-result', {
+      await axios.post('https://learnx-ed1w.onrender.com/quiz/save-result', {
         userID,
         email,
         topic,
@@ -122,8 +122,8 @@ function Quiz() {
     setLoading(true);
     try {
       const [res, res1] = await Promise.all([
-        axios.post('http://localhost:5000/quiz/generate', { topic, count }),
-        axios.post('http://localhost:5000/api/queries', { topic, userID, email }),
+        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count }),
+        axios.post('https://learnx-ed1w.onrender.com/api/queries', { topic, userID, email }),
       ]);
       setMcqs(res.data.mcqs);
       setQueries([res1.data, ...queries]);
@@ -137,7 +137,7 @@ function Quiz() {
 
   const saveQuizResult = async (email: string, topic: string, score: number) => {
     try {
-      await axios.post('http://localhost:5000/api/profile/quiz', { email, topic, score });
+      await axios.post('https://learnx-ed1w.onrender.com/api/profile/quiz', { email, topic, score });
     } catch (error) {
       console.error('Error saving quiz:', error);
     }

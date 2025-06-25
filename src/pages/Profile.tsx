@@ -18,7 +18,7 @@ function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/profile/email/${encodeURIComponent(email)}`
+          `https://learnx-ed1w.onrender.com/api/profile/email/${encodeURIComponent(email)}`
         );
         setProfileData(response.data);
       } catch (err) {
@@ -34,7 +34,7 @@ function ProfilePage() {
 
   const handlePasswordUpdate = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/profile/update-password`, {
+      await axios.put(`https://learnx-ed1w.onrender.com/api/profile/update-password`, {
         email,
         newPassword,
       });
