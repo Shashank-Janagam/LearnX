@@ -21,7 +21,7 @@ mongoose.connect(mongoURI, {
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 app.use(cors({
-  origin: 'https://getlearnxai.vercel.app/', // 🔁 update with your actual Vercel domain
+  origin: 'https://getlearnxai.vercel.app', // 🔁 update with your actual Vercel domain
   credentials: true
 }));app.use(express.json());
 app.use('/api/queries', queryRoutes); // 👈 register query route
