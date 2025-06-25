@@ -4,7 +4,8 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// 🔐 Login Route
+// 🔐 Login Routeimport bcrypt from 'bcryptjs';
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   console.log('Login attempt:', email);
@@ -15,20 +16,19 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password); // 👈 bcrypt check
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Send safe user info
     res.json({
       success: true,
       message: 'Login successful',
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email,
-      },
+        email: user.email
+      }
     });
 
   } catch (err) {

@@ -87,7 +87,7 @@ useEffect(() => {
     //   setTopics(JSON.parse(localTopics));
     // } else {
       try {
-        const res = await axios.get(`http://localhost:5000/history/${userID}`);
+        const res = await axios.get(`https://learnx-ed1w.onrender.com/history/${userID}`);
         const fetchedTopics = res.data.topics || [];
 
         // Save in both state and localStorage
@@ -104,7 +104,7 @@ useEffect(() => {
 
 const handleHistoryClick = async (topic: string) => {
   try {
-    // const res = await axios.get(`http://localhost:5000/history/${userID}/${topic}`);
+    // const res = await axios.get(`https://learnx-ed1w.onrender.com/history/${userID}/${topic}`);
     // console.log('Fetched result:', res.data);
     navigate('/QuizHistoryView', { state: { userID,topic } });
   } catch (err) {
@@ -122,7 +122,7 @@ const handleHistoryClick = async (topic: string) => {
 
     if (searchQuery.trim()) {
       try {
-        // const res = await axios.post('http://localhost:5000/api/queries', {
+        // const res = await axios.post('https://learnx-ed1w.onrender.com/api/queries', {
         // topic: searchQuery,
         // userID: userID,
         // email: email
@@ -147,7 +147,7 @@ const handleHistoryClick = async (topic: string) => {
   // useEffect(() => {
   //   const fetchQueries = async () => {
   //     try {
-  //       const res = await axios.get('http://localhost:5000/api/queries',{
+  //       const res = await axios.get('https://learnx-ed1w.onrender.com/api/queries',{
   //         params:{userID:userID}
   //       });
   //       setQueries(res.data);

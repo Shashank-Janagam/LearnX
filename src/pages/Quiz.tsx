@@ -48,8 +48,8 @@ useEffect(() => {
     setLoading(true);
     try {
       const [res, res1] = await Promise.all([
-        axios.post('http://localhost:5000/quiz/generate', { topic, count }),
-        axios.post('http://localhost:5000/api/queries', { topic, userID, email })
+        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count }),
+        axios.post('https://learnx-ed1w.onrender.com/api/queries', { topic, userID, email })
       ]);
       setMcqs(res.data.mcqs);
       setQueries([res1.data, ...queries]);
@@ -87,7 +87,7 @@ useEffect(() => {
 
 const saveQuizResult = async (email, topic, score) => {
   try {
-    const response = await axios.post('http://localhost:5000/api/profile/quiz', {
+    const response = await axios.post('https://learnx-ed1w.onrender.com/api/profile/quiz', {
       email,
       topic,
       score
@@ -160,7 +160,7 @@ const calculateScore = () => {
 
 
 
-   const result =await axios.post('http://localhost:5000/quiz/report', {
+   const result =await axios.post('https://learnx-ed1w.onrender.com/quiz/report', {
       topic,
       score,
       total: mcqs.length,
@@ -171,7 +171,7 @@ setReport(generatedReport);
 
 
   try {
-    await axios.post('http://localhost:5000/quiz/save-result', {
+    await axios.post('https://learnx-ed1w.onrender.com/quiz/save-result', {
       userID,
       email,
       topic,
