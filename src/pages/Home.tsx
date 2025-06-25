@@ -66,7 +66,7 @@ function Home() {
       if (!userID) return;
 
       try {
-        const res = await axios.get(`http://localhost:5000/history/${userID}`);
+        const res = await axios.get(`https://learnx-ed1w.onrender.com/history/${userID}`);
         const fetchedTopics = res.data.topics || [];
         setTopics(fetchedTopics);
         sessionStorage.setItem('topics', JSON.stringify(fetchedTopics));
