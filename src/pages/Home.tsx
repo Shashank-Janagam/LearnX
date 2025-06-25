@@ -3,7 +3,7 @@ import { Search, User, Sparkles } from 'lucide-react';
 import './Home.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import Quiz from './Quiz.tsx';
 function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
