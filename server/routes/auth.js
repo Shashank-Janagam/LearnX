@@ -3,7 +3,7 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-router.post('/login', async (req, res) => {
+router.post('https://learnx-ed1w.onrender.com/login', async (req, res) => {
   const { email, password } = req.body;
   console.log('Login attempt:', email, password);
 
@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
-router.post('/register', async (req, res) => {
+router.post('https://learnx-ed1w.onrender.com/register', async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
