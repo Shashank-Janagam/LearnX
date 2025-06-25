@@ -20,6 +20,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // Send safe user info
     res.json({
       success: true,
       message: 'Login successful',
@@ -29,6 +30,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
       },
     });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
