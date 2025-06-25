@@ -113,7 +113,7 @@ const Login = () => {
 
     } catch (err) {
       console.error('Frontend error:', err);
-      setError('Server error');
+      setError(error);
     }
   };
 

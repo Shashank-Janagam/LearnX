@@ -72,7 +72,7 @@ const Sign = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/auth/register', {
+      const res = await fetch('https://learnx-ed1w.onrender.com/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name }),
