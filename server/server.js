@@ -39,13 +39,13 @@ app.use(express.json());
 app.options('*', cors(corsOptions)); // preflight
 
 // ✅ Connect to MongoDB Atlas
-const mongoURI = process.env.MONGO_URI;
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+// const mongoURI = process.env.MONGO_URI;
+// mongoose.connect(mongoURI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// })
+//   .then(() => console.log('✅ Connected to MongoDB'))
+//   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // ✅ Register all routes
 app.use('/auth', authRoutes);
