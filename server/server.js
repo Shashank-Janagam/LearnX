@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 
 // ✅ Allow frontend origins
 const allowedOrigins = [
-  'http://localhost:5173',
+  'http://localhost:3000',
   'https://getlearnxai.vercel.app'
 ];
 
