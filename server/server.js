@@ -50,13 +50,15 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.use(express.json());
-
-// ✅ Register all routes
-app.use('/auth', authRoutes);
-app.use('/quiz', quizRoutes);
+app.use('/api/queries', queryRoutes); // 👈 register query route
+app.use('/quiz',quizRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/queries', queryRoutes);
-app.use('/history', history);
+app.use('/auth', authRoutes); // ✅ Only this for now
+app.use('/history', history); // 👈 add this
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 
 // ✅ Root route
 app.get('/', (req, res) => {
