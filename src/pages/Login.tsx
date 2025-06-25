@@ -29,6 +29,13 @@ const Login = () => {
   useEffect(() => {
     const storedUserID = localStorage.getItem('userID');
     if (storedUserID) {
+      sessionStorage.setItem('userID',storedUserID);
+      const emaill=localStorage.getItem('userEmail');
+      sessionStorage.setItem('userEmail',emaill);
+      const namee=localStorage.getItem('userName');
+      sessionStorage.setItem('userName',namee);
+
+
       navigate('/home');
     }
   }, [navigate]);
