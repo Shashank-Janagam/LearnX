@@ -3,7 +3,10 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import 'dotenv/config';
 import authRoutes from './routes/auth.js';
-
+import queryRoutes from './routes/query.js';
+import quizRoutes from './routes/quiz.js';
+import historyRoutes from './routes/history.js';
+import profileRoutes from './routes/profileRoutes.js';
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -27,7 +30,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/auth', authRoutes);
-
+app.use('/api/queries', queryRoutes);
+app.use('/quiz', quizRoutes);
+app.use('/history', historyRoutes);
+app.use('/api/profile', profileRoutes);
 // ✅ Test MongoDB connection
 const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI, {
