@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
-});import jwt from 'jsonwebtoken';
+});
 
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
