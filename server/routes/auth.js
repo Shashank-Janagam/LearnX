@@ -32,7 +32,8 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
-});
+});import jwt from 'jsonwebtoken';
+
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -42,11 +43,16 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ message: 'User already exists' });
     }
 
-    const newUser = new User({ name, email: email.toLowerCase(), password });
+    const newUser = new User({ name, email: email.toLowerCase(), password, isVerified: false });
     await newUser.save();
 
+    // ✅ Create verification token here
+    const token = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // ✅ Send token to frontend
     return res.status(201).json({
       message: 'User registered successfully',
+      token,
       user: {
         _id: newUser._id,
         name: newUser.name,
@@ -55,10 +61,11 @@ router.post('/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Register Error:', error); // 👈 this will show the actual error in terminal
+    console.error('Register Error:', error);
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 router.get('/verify-email', async (req, res) => {
   const token = req.query.token;
