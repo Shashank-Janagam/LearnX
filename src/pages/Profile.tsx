@@ -45,9 +45,14 @@ function ProfilePage() {
   const handleEducationUpdate = async () => {
     try {
       await axios.put(`https://learnx-ed1w.onrender.com/api/profile/update-education`, {
-        email,
-        education: { degree, course, institution ,role}
-      });
+          email,
+          education: {
+            degree,
+            course,
+            institution,
+            role
+          }
+        });
       alert('Educational info updated!');
       setIsEditingEducation(false);
     } catch (err) {
