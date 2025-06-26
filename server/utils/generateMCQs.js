@@ -91,35 +91,41 @@ export async function generateReport(responses, topic, score, total, time, timeL
   const { name, education, stats, recentQuizzes } = profileData;
 
   const prompt = `
-You are an intelligent tutor analyzing a student's quiz attempt.
+You are an AI tutor reviewing a student's quiz submission.
 
-Student Profile:
+👤 Student Profile:
 - Name: ${name}
 - Degree: ${education?.degree || 'Not specified'}
 - Course: ${education?.course || 'Not specified'}
 - Institution: ${education?.institution || 'Not specified'}
 - Role: ${education?.role || 'Student'}
 
-Previous Stats:
-- Total Quizzes Taken: ${stats?.totalQuizzes || 0}
-- Average Score: ${stats?.averageScore || 0}%
-- Most Recent Topics Attempted: ${recentQuizzes|| 'None'}
--
-Current Attempt:
-- Topic: ${topic}
-- Score: ${score} out of ${total}
-- Time Given: ${time} seconds
-- Time Left: ${timeLeft} seconds
+📈 Previous Stats:
+- Total Quizzes: ${stats?.totalQuizzes || 0}
+- Avg. Score: ${stats?.averageScore || 0}%
+- Last Topic: ${stats?.recentTopic || 'None'}
 
-Responses:
+📝 Current Quiz:
+- Topic: "${topic}"
+- Score: ${score}/${total}
+- Time Given: ${time} sec
+- Time Left: ${timeLeft} sec
+
+📤 Answers:
 ${JSON.stringify(responses, null, 2)}
 
-Write a concise, personalized report for the student in 10–15 short, simple sentences. It should include:
-1. A quick performance summary comparing this score to their past average.
-2. Mention of one strong concept and one weak area from this quiz attempt.
-3. 1–2 practical tips for improvement.
-4. A brief note about time management if they finished too quickly or ran out of time.
-5. End with a motivating message to encourage continued learning.
+Write a short report in plain English. Format with subtitles using emojis and be concise (8–10 lines). Include:
+
+1. 🔍 A possible reason why the student answered some questions incorrectly.
+2. 📊 A short performance summary (compare with average score).
+3. ✅ One strong area and ❌ one weak area.
+4. ⏱️ A brief time management comment (if timeLeft < 20% or > 80%).
+5. 💡 1 tip to improve weak areas.
+6. 🎯 End with an encouraging message.
+
+not in point wise
+
+Do not repeat the instructions or raw data.
 `;
 
   try {
