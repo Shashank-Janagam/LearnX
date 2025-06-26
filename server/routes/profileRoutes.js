@@ -75,5 +75,30 @@ router.put('/update-password', async (req, res) => {
   }
 });
 
+router.put('/update-education', async (req, res) => {
+  const { email, degree, course, institution ,role} = req.body;
+
+  try {
+    const updated = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          'education.degree': degree,
+          'education.course': course,
+          'education.institution': institution,
+          'role':role
+        }
+      },
+      { new: true }
+    );
+
+    res.json({ message: 'Education updated successfully', user: updated });
+  } catch (err) {
+    console.error('Error updating education:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 
 export default router;

@@ -46,7 +46,14 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  education: {
+  degree: { type: String, default: '' },
+  course: { type: String, default: '' },
+  institution: { type: String, default: '' },
+  role:{type:String,default:'Not Mentioned'}
+}
+
 });
 
 // Export the model and explicitly map to 'Users' collection

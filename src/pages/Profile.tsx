@@ -12,6 +12,11 @@ function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [profileData, setProfileData] = useState(null);
   const email = sessionStorage.getItem('userEmail');
+  const [degree, setDegree] = useState('');
+  const [course, setCourse] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [isEditingEducation, setIsEditingEducation] = useState(false);
+  const [role, setRole]=useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,16 +26,35 @@ function ProfilePage() {
           `https://learnx-ed1w.onrender.com/api/profile/email/${encodeURIComponent(email)}`
         );
         setProfileData(response.data);
+        if (response.data.education) {
+          const { degree, course, institution } = response.data.education;
+          setDegree(degree || '');
+          setCourse(course || '');
+          setInstitution(institution || '');
+        }
       } catch (err) {
         console.error('Error fetching profile:', err);
       }
     };
 
     if (email) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       fetchProfile();
     }
   }, [email]);
+
+  const handleEducationUpdate = async () => {
+    try {
+      await axios.put(`https://learnx-ed1w.onrender.com/api/profile/update-education`, {
+        email,
+        education: { degree, course, institution ,role}
+      });
+      alert('Educational info updated!');
+      setIsEditingEducation(false);
+    } catch (err) {
+      console.error('Education update failed:', err);
+      alert('Failed to update education.');
+    }
+  };
 
   const handlePasswordUpdate = async () => {
     try {
@@ -93,7 +117,7 @@ function ProfilePage() {
                     </div>
                     <div className="learnx-info-item">
                       <Award className="learnx-icon-sm" />
-                      <span className="learnx-role-badge">{profileData.role}</span>
+                      <span className="learnx-role-badge">{role}</span>
                     </div>
                   </div>
                 </div>
@@ -144,13 +168,55 @@ function ProfilePage() {
             <div className="learnx-settings-card">
               <h3><Settings className="learnx-icon-sm learnx-purple" /> Account Settings</h3>
               <div className="learnx-settings-options">
-                <button className="learnx-settings-button">
+                <button
+                  className="learnx-settings-button"
+                  onClick={() => setIsEditingEducation(!isEditingEducation)}
+                >
                   <Edit3 className="learnx-icon-sm learnx-purple" />
                   <div>
-                    <div className="info"> Edit Profile</div>
-                    <small>Update your information</small>
+                    <div className="info">{isEditingEducation ? 'Cancel' : 'Edit Profile'}</div>
+                    <small>{isEditingEducation ? 'Discard changes' : 'Update your information'}</small>
                   </div>
                 </button>
+
+{isEditingEducation ? (
+  <div className="learnx-education-form">
+    <input
+      type="text"
+      placeholder="Degree"
+      value={degree}
+      onChange={(e) => setDegree(e.target.value)}
+    />
+    <input
+      type="text"
+      placeholder="Course"
+      value={course}
+      onChange={(e) => setCourse(e.target.value)}
+    />
+    <input
+      type="text"
+      placeholder="Institution"
+      value={institution}
+      onChange={(e) => setInstitution(e.target.value)}
+    />
+        <input
+      type="text"
+      placeholder="Role"
+      value={role}
+      onChange={(e) => setRole(e.target.value)}
+    />
+    <button onClick={handleEducationUpdate} className="learnx-update-button">
+      Update Education
+    </button>
+  </div>
+) : (
+  <div className="learnx-info-details">
+    <div className="learnx-info-item">🎓 <strong>Degree:</strong> {degree || 'Not provided'}</div>
+    <div className="learnx-info-item">📘 <strong>Course:</strong> {course || 'Not provided'}</div>
+    <div className="learnx-info-item">🏫 <strong>Institution:</strong> {institution || 'Not provided'}</div>
+  </div>
+)}
+
 
                 <button
                   className="learnx-settings-button"
