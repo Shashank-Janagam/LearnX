@@ -214,7 +214,7 @@ setReport(generatedReport);
       report:generatedReport,
     });
 
-    saveQuizResult(sessionStorage.getItem("userEmail"), topic, (score/mcqs.length)*100);
+    saveQuizResult(sessionStorage.getItem("userEmail"), topic, Math.floor((score / mcqs.length) * 100));
 
  
     console.log('✅ Quiz result saved');
