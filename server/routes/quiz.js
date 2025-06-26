@@ -5,10 +5,10 @@ import QuizResult from '../models/QuizResult.js';
 const router =express.Router();
 
 router.post('/generate',async (req, res) => {
-    const {topic ,count}=req.body;
+    const {topic ,count,profileData}=req.body;
 
     try{
-        const mcqs=await generateMCQs(topic, count);
+        const mcqs=await generateMCQs(topic, count,profileData);
         res.json({success:true,topic, mcqs});
     }catch(err){
             res.status(500).json({ success: false, message: 'Failed to generate MCQs', error: err.message });

@@ -28,10 +28,15 @@ function Quiz() {
   const [error, setError] = useState<string>('');
 const [timeLeft, setTimeLeft] = useState<number>(0);
   const [queries, setQueries] = useState([]);
+  const [profileData, setProfileData] = useState(null);
 
   const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 });
   const [showConfig, setShowConfig] = useState(true);
-
+  const [degree, setDegree] = useState('');
+  const [course, setCourse] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [isEditingEducation, setIsEditingEducation] = useState(false);
+  const [role, setRole]=useState('');
   useEffect(() => {
 
     const storedEmail=sessionStorage.getItem('userEmail');
@@ -39,6 +44,30 @@ const [timeLeft, setTimeLeft] = useState<number>(0);
       navigate('/');
     }
   }, []);
+
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get(
+          `https://learnx-ed1w.onrender.com/api/profile/email/${encodeURIComponent(email)}`
+        );
+        setProfileData(response.data);
+        if (response.data.education) {
+          const { degree, course, institution } = response.data.education;
+          setDegree(degree || '');
+          setCourse(course || '');
+          setInstitution(institution || '');
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    if (email) {
+      fetchProfile();
+    }
+  }, [email]);
 useEffect(() => {
   document.title = `LearnX | ${topic}`;
 }, [topic]);
@@ -48,7 +77,7 @@ useEffect(() => {
     setLoading(true);
     try {
       const [res, res1] = await Promise.all([
-        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count }),
+        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count ,profileData}),
         axios.post('https://learnx-ed1w.onrender.com/api/queries', { topic, userID, email })
       ]);
       setMcqs(res.data.mcqs);

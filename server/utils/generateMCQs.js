@@ -9,15 +9,32 @@ const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
 const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
 const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION;
 
-export async function generateMCQs(topic, count) {
-  const prompt = `
-Generate "${count}" multiple-choice questions (MCQs) with 4 options each for the topic "${topic}". 
-Each question must include:
-- question text
-- 4 answer options in JSON format with "text" and "isCorrect"
-- a short explanation for the correct answer
+export async function generateMCQs(topic, count, profileData) {
+  const { name, education, stats,recentQuizzes } = profileData;
 
-Output JSON format:
+  const prompt = `
+You are an intelligent quiz generator for a personalized learning platform called LearnX.
+
+Generate "${count}" multiple-choice questions (MCQs) on the topic "${topic}" based on the following student's profile:
+
+Student Name: ${name}
+Degree: ${education?.degree || 'Not specified'}
+Course: ${education?.course || 'Not specified'}
+Institution: ${education?.institution || 'Not specified'}
+Role: ${education?.role || 'Student'}
+Total Quizzes Taken: ${stats?.totalQuizzes || 0}
+Average Score: ${stats?.averageScore || 0}%
+Most Recent Topic Attempted: ${stats?.recentTopic || 'None'}
+Recent Quizes attempted:${recentQuizzes||'None'}
+
+Instructions:
+- Focus on fundamental and practical understanding suitable for a student with this background.
+- Questions should gradually increase in difficulty.
+- Use simple language but ensure conceptual depth.
+- Avoid repeating previous recent topics.
+- Add short, helpful explanations for correct answers.
+
+Output the MCQs in this exact JSON format:
 [
   {
     "question": "What is ...?",
@@ -31,6 +48,10 @@ Output JSON format:
   }
 ]
 `;
+
+  return prompt;
+}
+
 
   try {
     const response = await axios.post(
