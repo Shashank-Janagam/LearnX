@@ -15,6 +15,7 @@ const Sign = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
+const [verificationMessage, setVerificationMessage] = useState('');
 
   const navigate = useNavigate();
 
@@ -47,7 +48,6 @@ const Sign = () => {
     emailjs
       .send('service_x561nxp', 'template_o8fknnz', templateParams, 'HCjaEIZOneTx9xkek')
       .then(() => {
-        alert('✅ Verification email sent. Check your inbox.');
       })
       .catch((error) => {
         console.error('❌ EmailJS error:', error);
@@ -111,11 +111,13 @@ const handleRegister = async (e: React.FormEvent) => {
     sendVerificationEmail(email, token);
 
     // ✅ Notify user to check their inbox
-    alert('✅ Registration successful! Please check your email to verify your account.');
+    setVerificationMessage('✅ Verification email sent. Please check your inbox.');
 
     // 🚫 Don't auto-login; instead, redirect to login or verification page
-    navigate('/');
-  } catch (err) {
+    
+setTimeout(() => {
+  navigate('/');
+}, 10000);  } catch (err) {
     console.error('Register error:', err);
     setError('Server error');
   } finally {
@@ -151,6 +153,11 @@ const handleRegister = async (e: React.FormEvent) => {
               <p className="error-text">{error}</p>
             </div>
           )}
+{verificationMessage && (
+  <div className="verify-message">
+    <p className="verify-text">{verificationMessage}</p>
+  </div>
+)}
 
           <form onSubmit={handleRegister} className="login-form">
             <div className="form-group">
@@ -257,7 +264,7 @@ const handleRegister = async (e: React.FormEvent) => {
           </div>
 
           <div className="signup-section">
-            <button type="button" className="signup-link" onClick={() => navigate('/Login')}>
+            <button type="button" className="signup-link" onClick={() => navigate('/')}>
               Login
             </button>
           </div>

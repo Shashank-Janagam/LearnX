@@ -22,6 +22,7 @@
   margin-top: 2rem;
 }
 
+
 .logo-icon {
   display: flex;
   align-items: center;
@@ -197,6 +198,29 @@
   
   .dark .error-text {
     color: #f87171;
+  }
+    .verify-message {
+    background: #fef2f2;
+    border: 1px solid #5ff05c;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .dark .verify-message {
+    background: rgba(53, 168, 61, 0.2);
+    border-color: #399b43;
+  }
+  
+  .verify-text {
+    color: #4aad3b;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  .dark .verify-text {
+    color: #3baa55;
   }
   
   /* Form Styles */
