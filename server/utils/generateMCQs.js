@@ -21,6 +21,7 @@ Student Name: ${name}
 Degree: ${education?.degree || 'Not specified'}
 Course: ${education?.course || 'Not specified'}
 Institution: ${education?.institution || 'Not specified'}
+Country: India
 Role: ${education?.role || 'Student'}
 Total Quizzes Taken: ${stats?.totalQuizzes || 0}
 Average Score: ${stats?.averageScore || 0}%
@@ -86,24 +87,39 @@ Output the MCQs in this exact JSON format:
     return [];
   }
 }
+export async function generateReport(responses, topic, score, total, time, timeLeft, profileData) {
+  const { name, education, stats, recentQuizzes } = profileData;
 
-export async function generateReport(responses, topic, score, total) {
   const prompt = `
 You are an intelligent tutor analyzing a student's quiz attempt.
 
-Topic: "${topic}"  
-Score: ${score} out of ${total}
+Student Profile:
+- Name: ${name}
+- Degree: ${education?.degree || 'Not specified'}
+- Course: ${education?.course || 'Not specified'}
+- Institution: ${education?.institution || 'Not specified'}
+- Role: ${education?.role || 'Student'}
+
+Previous Stats:
+- Total Quizzes Taken: ${stats?.totalQuizzes || 0}
+- Average Score: ${stats?.averageScore || 0}%
+- Most Recent Topics Attempted: ${recentQuizzes|| 'None'}
+-
+Current Attempt:
+- Topic: ${topic}
+- Score: ${score} out of ${total}
+- Time Given: ${time} seconds
+- Time Left: ${timeLeft} seconds
 
 Responses:
 ${JSON.stringify(responses, null, 2)}
 
-Now, write a brief and simple personalized report (10–15 lines only).  
-Use short, clear sentences suitable for a student.
-Include:  
-1. A quick summary of performance  
-2. One strong area and one weak area  
-3. 1–2 tips for improvement  
-4. End with a short, encouraging sentence
+Write a concise, personalized report for the student in 10–15 short, simple sentences. It should include:
+1. A quick performance summary comparing this score to their past average.
+2. Mention of one strong concept and one weak area from this quiz attempt.
+3. 1–2 practical tips for improvement.
+4. A brief note about time management if they finished too quickly or ran out of time.
+5. End with a motivating message to encourage continued learning.
 `;
 
   try {

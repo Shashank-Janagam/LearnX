@@ -27,6 +27,7 @@ function Quiz() {
   const [showResults, setShowResults] = useState<{ [key: number]: boolean }>({});
   const [error, setError] = useState<string>('');
 const [timeLeft, setTimeLeft] = useState<number>(0);
+const [time,setTime]=useState<number>(0);
   const [queries, setQueries] = useState([]);
   const [profileData, setProfileData] = useState(null);
 
@@ -73,7 +74,7 @@ useEffect(() => {
 }, [topic]);
   const fetchMCQs = async (count: number) => {
     setTimeLeft(quizConfig.timeLimit * 60); // convert minutes to seconds
-
+    setTime(timeLeft);
     setLoading(true);
     try {
       const [res, res1] = await Promise.all([
@@ -193,7 +194,10 @@ const calculateScore = () => {
       topic,
       score,
       total: mcqs.length,
-      responses
+      responses,
+      time,
+      timeLeft,
+      profileData
     });
  const generatedReport = result.data.report;
 setReport(generatedReport);

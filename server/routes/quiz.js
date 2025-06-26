@@ -18,9 +18,9 @@ router.post('/generate',async (req, res) => {
 });
 // routes/quiz.js
 router.post('/report', async (req, res) => {
-  const { responses, topic, score, total } = req.body;
+  const { responses, topic, score, total ,time,timeLeft,profileData} = req.body;
   try {
-    const report = await generateReport(responses, topic, score, total);
+    const report = await generateReport(responses, topic, score, total,time,timeLeft,profileData);
     res.json({ report });
   } catch (err) {
     console.error(err);
