@@ -18,7 +18,7 @@ function App(){
         <Route path='/Sign' element={<Sign/>}/>
         <Route path='/QuizHistoryView' element={<Qq/>}/>
         <Route path='/Profile' element={<Profile/>}/>
-        <Route path='/Verify' element={<Verify/>}/>
+        <Route path='/verify-email' element={<Verify/>}/>
         
       </Routes>
       </Router>
