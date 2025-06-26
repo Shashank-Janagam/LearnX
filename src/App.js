@@ -7,7 +7,7 @@ import Quiz from './pages/Quiz.tsx';
 import Sign from './pages/Sign.tsx';
 import Qq from './pages/QuizHistoryView.tsx'; 
 import Profile from './pages/Profile.tsx'; 
-
+import Verify from './pages/VerifyEmail.tsx';
 function App(){
   return(
     <Router>
@@ -18,7 +18,7 @@ function App(){
         <Route path='/Sign' element={<Sign/>}/>
         <Route path='/QuizHistoryView' element={<Qq/>}/>
         <Route path='/Profile' element={<Profile/>}/>
-
+        <Route path='/Verify' element={<Verify/>}/>
         
       </Routes>
       </Router>
