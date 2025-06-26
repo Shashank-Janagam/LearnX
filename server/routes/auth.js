@@ -1,5 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -14,7 +15,9 @@ router.post('/login', async (req, res) => {
     if (!user || user.password !== password) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-
+     if (!user.isVerified) {
+      return res.status(403).json({ success: false, message: 'Please verify your email before logging in.' });
+    }
     // Only send safe fields
     res.json({
       success: true,
@@ -56,5 +59,20 @@ router.post('/register', async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
+router.get('/verify-email', async (req, res) => {
+  const token = req.query.token;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const email = decoded.email;
+
+    await User.findOneAndUpdate({ email }, { isVerified: true });
+
+    res.send('✅ Email verified! You can now log in.');
+  } catch (err) {
+    res.status(400).send('❌ Invalid or expired verification link.');
+  }
+});
+
 
 export default router;

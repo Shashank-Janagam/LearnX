@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Moon, Sun, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import jwt from 'jsonwebtoken';
+import emailjs from '@emailjs/browser';
 
 const Sign = () => {
   const [name, setName] = useState('');
@@ -33,7 +35,25 @@ const Sign = () => {
       .then((message) => console.log('Server says:', message))
       .catch((err) => console.error('❌ Could not connect to backend:', err));
   }, []);
+  
+ const sendVerificationEmail = (email: string, token: string) => {
+    const verificationLink = `https://learnx.vercel.app/verify-email?token=${token}`;
 
+    const templateParams = {
+      user_email: email,
+      verification_link: verificationLink,
+    };
+
+    emailjs
+      .send('service_x561nxp', 'template_o8fknnz', templateParams, 'HCjaEIZOneTx9xkek')
+      .then(() => {
+        alert('✅ Verification email sent. Check your inbox.');
+      })
+      .catch((error) => {
+        console.error('❌ EmailJS error:', error);
+        alert('❌ Failed to send verification email.');
+      });
+  };
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
     setIsDarkMode(newTheme);
@@ -46,67 +66,62 @@ const Sign = () => {
       localStorage.setItem('theme', 'light');
     }
   };
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  if (!email || !password || !confirmPassword || !name) {
+    setError('Please enter all required fields');
+    setIsLoading(false);
+    return;
+  }
 
-    if (!email || !password || !confirmPassword || !name) {
-      setError('Please enter all required fields');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setError('Please enter a valid email address');
+    setIsLoading(false);
+    return;
+  }
+
+  if (confirmPassword !== password) {
+    setError('Passwords do not match');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const res = await fetch('https://learnx-ed1w.onrender.com/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.message || 'Signup failed');
       setIsLoading(false);
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      setIsLoading(false);
-      return;
-    }
+    // ✅ Generate email verification token
+    const token=data.token;
+    // ✅ Send verification email
+    sendVerificationEmail(email, token);
 
-    if (confirmPassword !== password) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
+    // ✅ Notify user to check their inbox
+    alert('✅ Registration successful! Please check your email to verify your account.');
 
-    try {
-      const res = await fetch('https://learnx-ed1w.onrender.com/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setTimeout(() => {
-          setError(data.message || 'Signup failed');
-          setIsLoading(false);
-        }, 500);
-      } else {
-        const { _id, name, email } = data.user;
-
-        // Store in session
-        sessionStorage.setItem('userID', _id);
-        sessionStorage.setItem('userName', name);
-        sessionStorage.setItem('userEmail', email);
-
-        // Optionally remember
-        if (rememberMe) {
-          localStorage.setItem('userID', _id);
-          localStorage.setItem('userName', name);
-          localStorage.setItem('userEmail', email);
-        }
-
-        setTimeout(() => navigate('/home'), 1000);
-      }
-    } catch (err) {
-      console.error('Register error:', err);
-      setError('Server error');
-    }
-  };
+    // 🚫 Don't auto-login; instead, redirect to login or verification page
+    navigate('/');
+  } catch (err) {
+    console.error('Register error:', err);
+    setError('Server error');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className={`login-container ${isDarkMode ? 'dark' : ''}`}>

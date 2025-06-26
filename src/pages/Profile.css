@@ -22,6 +22,14 @@
   color: #f1f1f1;
   font-size: 14px;
 }
+.learnx-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px; /* adjust based on your layout */
+  display: inline-block;
+  vertical-align: bottom;
+}
 
 .learnx-education-form input::placeholder {
   color: #888;

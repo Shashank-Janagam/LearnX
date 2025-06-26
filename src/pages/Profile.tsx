@@ -144,7 +144,7 @@ function ProfilePage() {
                 </div>
                 <div className="learnx-stat-box">
                   <Clock className="learnx-icon-sm learnx-green" />
-                  <span>{profileData.stats.recentTopic}</span>
+<span className="learnx-truncate">{profileData.stats.recentTopic}</span>
                   <p>Latest Topic</p>
                 </div>
               </div>
@@ -160,7 +160,7 @@ function ProfilePage() {
                       <p>{quiz.date}</p>
                     </div>
                     <div className="learnx-recent-score">
-                      <div>{quiz.score}%</div>
+                      <div>{Math.round(quiz.score)}%</div>
                       <span>Score</span>
                     </div>
                   </div>
