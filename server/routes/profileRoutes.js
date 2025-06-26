@@ -76,8 +76,7 @@ router.put('/update-password', async (req, res) => {
 });
 
 router.put('/update-education', async (req, res) => {
-  const { email, education } = req.body;
-  const { degree, course, institution, role } = education;
+  const { email, degree, course, institution ,role} = req.body;
 
   try {
     const updated = await User.findOneAndUpdate(
@@ -87,7 +86,7 @@ router.put('/update-education', async (req, res) => {
           'education.degree': degree,
           'education.course': course,
           'education.institution': institution,
-          'education.role': role // ✅ nested role update
+          'role':role
         }
       },
       { new: true }
@@ -99,7 +98,6 @@ router.put('/update-education', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
 
 
 
