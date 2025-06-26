@@ -37,7 +37,7 @@ const Sign = () => {
   }, []);
   
  const sendVerificationEmail = (email: string, token: string) => {
-    const verificationLink = `https://learnx.vercel.app/verify-email?token=${token}`;
+    const verificationLink = `https://getlearnxai.vercel.app/verify-email?token=${token}`;
 
     const templateParams = {
       user_email: email,
