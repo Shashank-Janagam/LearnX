@@ -117,7 +117,7 @@ function ProfilePage() {
                     </div>
                     <div className="learnx-info-item">
                       <Award className="learnx-icon-sm" />
-                      <span className="learnx-role-badge">{role}</span>
+                      <span className="learnx-role-badge">{profileData.education.role}</span>
                     </div>
                   </div>
                 </div>
@@ -211,9 +211,9 @@ function ProfilePage() {
   </div>
 ) : (
   <div className="learnx-info-details">
-    <div className="learnx-info-item">🎓 <strong>Degree:</strong> {degree || 'Not provided'}</div>
-    <div className="learnx-info-item">📘 <strong>Course:</strong> {course || 'Not provided'}</div>
-    <div className="learnx-info-item">🏫 <strong>Institution:</strong> {institution || 'Not provided'}</div>
+    <div className="learnx-info-item">🎓 <strong>Degree:</strong> {profileData.education.degree || 'Not provided'}</div>
+    <div className="learnx-info-item">📘 <strong>Course:</strong> {profileData.education.course || 'Not provided'}</div>
+    <div className="learnx-info-item">🏫 <strong>Institution:</strong> {profileData.education.institution || 'Not provided'}</div>
   </div>
 )}
 
