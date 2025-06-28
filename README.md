@@ -1,3 +1,60 @@
+# 📘 LearnX
+
+LearnX is an AI-powered educational platform that helps students learn smarter with auto-generated quizzes, flashcards, chat features, and progress tracking. It uses AI models like Gemini and OpenRouter to dynamically create multiple-choice questions from any topic entered by the user.
+
+---
+
+## 🌟 Features
+
+- ✅ Generate MCQs using Google Gemini or OpenRouter AI
+- 🧠 Intelligent quiz history tracking
+- 🔁 Review past answers and scores
+- 🃏 Flashcards for key topics *(planned)*
+- 🔐 Secure authentication using JWT
+- 📧 Email verification and password reset using EmailJS
+- 🌙 Light/Dark mode UI toggle
+
+---
+
+## 🚀 Tech Stack
+-----------------------------------------------------
+| Category       | Technologies                     |
+|----------------|----------------------------------|
+| Frontend       | React, TailwindCSS, Lucide Icons |
+| Backend        | Node.js, Express.js              |
+| Database       | MongoDB                          |
+| Authentication | JWT, EmailJS                     |
+| AI Integration | Azure OpenAI GPT-4.1             |
+-----------------------------------------------------
+---
+
+## 🖥️ Demo
+
+**Frontend**: https://getlearnxai.vercel.app  
+**Backend**: https://learnx-ed1w.onrender.com  
+
+---
+
+## 📸 Screenshots
+
+| Login Page | Quiz Page | Home page | Profile page|
+|------------|-----------|-----------|-------------|
+| ![Login](./screenshots/login.png) | ![Quiz](./screenshots/quiz.png) | ![Home](./screenshots/home.png)|![Profile](./screenshots/profile.png)|
+
+---
+
+🧪 How to Use
+Sign up or log in
+
+Enter a topic (e.g., "Operating Systems") to generate a quiz
+
+Answer all questions and submit
+
+View results and previous attempts from quiz history
+
+Reset password or verify email if needed
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

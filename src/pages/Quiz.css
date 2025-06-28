@@ -88,10 +88,13 @@ body {
 .config-section, .loading-section, .error-section, .questions-section {
   background: var(--secondary-bg);
   padding: 2rem;
+  flex-direction: row;
   border-radius: var(--border-radius);
   box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
-
+.config-section{
+  max-width: 30%;
+}
 .config-card h2 {
   margin-bottom: 1rem;
 }
@@ -387,11 +390,7 @@ body {
   gap: 0.5rem;
 }
 
-.report-section,
-.config-section,
-.loading-section,
-.error-section,
-.questions-section {
+.report-section {
   background: var(--secondary-bg);
   padding: 1rem;
   /* padding: 0rem; */
