@@ -77,7 +77,14 @@ function ProfilePage() {
   };
 
   if (!profileData) {
-    return <div className="loading-text">Loading profile...</div>;
+return (
+  <div className="profile-loading-container">
+    <div className="profile-loading-card">
+      <div className="spinner" />
+      <p>Loading profile...</p>
+    </div>
+  </div>
+);
   }
 
   return (
@@ -92,7 +99,7 @@ function ProfilePage() {
           <div className="learnx-header-right">
             <div className="learnx-portal-label">
               <User className="learnx-icon-sm" />
-              <span>Student Portal</span>
+              <span>Dashboard</span>
             </div>
           </div>
         </div>
@@ -250,8 +257,7 @@ function ProfilePage() {
 
             <div className="learnx-actions-card">
               <h3>Quick Actions</h3>
-              <button className="learnx-primary-action">Take New Quiz</button>
-              <button className="learnx-secondary-action">View All Results</button>
+              <button className="learnx-primary-action" onClick={()=>navigate('/Home')}>Take New Quiz</button>
             </div>
           </div>
         </div>

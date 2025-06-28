@@ -191,7 +191,7 @@ const handleHistoryClick = async (topic: string) => {
               <button onClick={navigateToProfile} className="profile-dropdown-item">
                 View Profile
               </button>
-              <button className="profile-dropdown-item">Settings</button>
+              {/* <button className="profile-dropdown-item">Settings</button> */}
               <button className="profile-dropdown-item"  onClick={() => setIsHistoryOpen(true)}>History</button>
               <div className="profile-dropdown-separator">
                 <button className="profile-dropdown-item"   onClick={handleLogout}>
@@ -205,7 +205,7 @@ const handleHistoryClick = async (topic: string) => {
             ref={historyRef}
             className={`history-sidebar ${isHistoryOpen ? 'open' : ''}`}
           >
-            <div className='logos'>
+            <div className='logos' onClick={() => setIsHistoryOpen(false)}>
           <div className="logo-container" id="slider">
           <div className="logo-icon">
             <span className="logo-text" >LearnX</span>

@@ -42,6 +42,7 @@ const [verificationMessage, setVerificationMessage] = useState('');
 
     const templateParams = {
       user_email: email,
+      name:name,
       verification_link: verificationLink,
     };
 
@@ -54,6 +55,7 @@ const [verificationMessage, setVerificationMessage] = useState('');
         alert('❌ Failed to send verification email.');
       });
   };
+  
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
     setIsDarkMode(newTheme);

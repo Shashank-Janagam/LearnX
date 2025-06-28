@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import emailjs from '@emailjs/browser';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -52,6 +53,40 @@ const Login = () => {
       .then((message) => console.log('Server says:', message))
       .catch((err) => console.error('❌ Could not connect to backend:', err));
   }, []);
+const sendPasswordResetEmail = async () => {
+  if(!email){
+    setError("Please enter email to reset password");
+  }
+  try {
+    const res = await fetch('https://your-api.com/auth/request-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+    const token = data.token;
+
+    const resetLink = `https://getlearnxai.vercel.app/reset-password?token=${token}`;
+
+    const templateParams = {
+      user_email: email,
+      reset_link: resetLink,
+    };
+
+    await emailjs.send(
+      'service_x561nxp',
+      'template_ghndhr9', // your EmailJS reset template ID
+      templateParams,
+      'HCjaEIZOneTx9xkek'
+    );
+
+    alert('✅ Password reset email sent. Check your inbox.');
+  } catch (error) {
+    console.error('❌ Failed to send reset email:', error);
+    alert('❌ Error sending reset email.');
+  }
+};
 
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
@@ -211,7 +246,7 @@ const Login = () => {
                 />
                 <label htmlFor="remember-me" className="checkbox-label">Remember me</label>
               </div>
-              <button type="button" className="forgot-password">Forgot password?</button>
+              <button type="button" className="forgot-password" onClick={sendPasswordResetEmail}>Forgot password?</button>
             </div>
 
             <button type="submit" disabled={isLoading} className="login-button">

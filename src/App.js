@@ -8,6 +8,7 @@ import Sign from './pages/Sign.tsx';
 import Qq from './pages/QuizHistoryView.tsx'; 
 import Profile from './pages/Profile.tsx'; 
 import Verify from './pages/VerifyEmail.tsx';
+import Reset from './pages/ResetPassword.tsx';
 function App(){
   return(
     <Router>
@@ -19,6 +20,7 @@ function App(){
         <Route path='/QuizHistoryView' element={<Qq/>}/>
         <Route path='/Profile' element={<Profile/>}/>
         <Route path='/verify-email' element={<Verify/>}/>
+        <Route path='/reset-password' element={<Reset/>}/>
         
       </Routes>
       </Router>
