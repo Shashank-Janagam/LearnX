@@ -80,7 +80,7 @@ router.get('/verify-email', async (req, res) => {
     res.status(400).send('❌ Invalid or expired verification link.');
   }
 });
-router.post('/auth/request-reset', async (req, res) => {
+router.post('/request-reset', async (req, res) => {
   const { email } = req.body;
 
   // Check if user exists in DB (replace with real DB call)

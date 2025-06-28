@@ -56,9 +56,10 @@ const Login = () => {
 const sendPasswordResetEmail = async () => {
   if(!email){
     setError("Please enter email to reset password");
+    return;
   }
   try {
-    const res = await fetch('https://your-api.com/auth/request-reset', {
+    const res = await fetch('https://learnx-ed1w.onrender.com/auth/request-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
