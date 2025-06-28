@@ -58,6 +58,7 @@ const sendPasswordResetEmail = async () => {
     setError("Please enter email to reset password");
     return;
   }
+  setIsLoading(true);
   try {
     const res = await fetch('https://learnx-ed1w.onrender.com/auth/request-reset', {
       method: 'POST',
@@ -83,6 +84,7 @@ const sendPasswordResetEmail = async () => {
     );
 
     alert('✅ Password reset email sent. Check your inbox.');
+    setIsLoading(false);
   } catch (error) {
     console.error('❌ Failed to send reset email:', error);
     alert('❌ Error sending reset email.');
