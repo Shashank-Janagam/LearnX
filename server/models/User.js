@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema({
 });
 userSchema.index(
   { createdAt: 1 },
-  { expireAfterSeconds: 60, partialFilterExpression: { isVerified: false } }
+  { expireAfterSeconds: 3600, partialFilterExpression: { isVerified: false } }
 );
 // Export the model and explicitly map to 'Users' collection
 const User = mongoose.models.User || mongoose.model('User', userSchema, 'Users');
