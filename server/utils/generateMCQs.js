@@ -152,13 +152,13 @@
   //   }
   // }
 // utils/generateMCQs.js// server/utils/generateMCQs.js
+// server/utils/generateMCQs.js
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 🔹 Function: Generate MCQs
 export async function generateMCQs(topic, count, profileData) {
   const { name, education, stats, recentQuizzes } = profileData;
 
@@ -201,7 +201,7 @@ Output the MCQs in this exact JSON format:
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-pro' }); // ✅ correct
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
@@ -224,7 +224,6 @@ Output the MCQs in this exact JSON format:
   }
 }
 
-// 🔹 Function: Generate Quiz Report
 export async function generateReport(responses, topic, score, total, time, timeLeft, profileData) {
   const { name, education, stats } = profileData;
 
@@ -265,7 +264,7 @@ Do not repeat the instructions or raw data.
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-pro' }); // ✅ correct
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
@@ -273,3 +272,4 @@ Do not repeat the instructions or raw data.
     return '⚠️ Failed to generate personalized report.';
   }
 }
+
