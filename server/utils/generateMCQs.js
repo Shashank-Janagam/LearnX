@@ -151,7 +151,7 @@
   //     return '⚠️ Failed to generate personalized report.';
   //   }
   // }
-// utils/generateMCQs.js
+// utils/generateMCQs.js// server/utils/generateMCQs.js
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -221,5 +221,55 @@ Output the MCQs in this exact JSON format:
   } catch (error) {
     console.error('❌ Error generating MCQs from Gemini:', error.message);
     return [];
+  }
+}
+
+// 🔹 Function: Generate Quiz Report
+export async function generateReport(responses, topic, score, total, time, timeLeft, profileData) {
+  const { name, education, stats } = profileData;
+
+  const prompt = `
+You are an AI tutor reviewing a student's quiz submission.
+
+👤 Student Profile:
+- Name: ${name}
+- Degree: ${education?.degree || 'Not specified'}
+- Course: ${education?.course || 'Not specified'}
+- Institution: ${education?.institution || 'Not specified'}
+- Role: ${education?.role || 'Student'}
+
+📈 Previous Stats:
+- Total Quizzes: ${stats?.totalQuizzes || 0}
+- Avg. Score: ${stats?.averageScore || 0}%
+- Last Topic: ${stats?.recentTopic || 'None'}
+
+📝 Current Quiz:
+- Topic: "${topic}"
+- Score: ${score}/${total}
+- Time Given: ${time} sec
+- Time Left: ${timeLeft} sec
+
+📤 Answers:
+${JSON.stringify(responses, null, 2)}
+
+Write a short report in plain English. Format with subtitles using emojis and be concise (8–10 lines). Include:
+
+1. 🔍 A possible reason why the student answered some questions incorrectly.
+2. 📊 A short performance summary (compare with average score).
+3. ✅ One strong area and ❌ one weak area.
+4. ⏱️ A brief time management comment (if timeLeft < 20% or > 80%).
+5. 💡 1 tip to improve weak areas.
+6. 🎯 End with an encouraging message.
+
+Do not repeat the instructions or raw data.
+`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error) {
+    console.error('❌ Error generating report from Gemini:', error.message);
+    return '⚠️ Failed to generate personalized report.';
   }
 }
