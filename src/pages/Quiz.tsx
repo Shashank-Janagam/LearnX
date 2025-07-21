@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Quiz.css';
 import './Home.tsx';
+import { Divide } from 'lucide-react';
 
 interface MCQOption {
   text: string;
@@ -30,8 +31,7 @@ const [timeLeft, setTimeLeft] = useState<number>(0);
 const [time,setTime]=useState<number>(0);
   const [queries, setQueries] = useState([]);
   const [profileData, setProfileData] = useState(null);
-
-  const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 });
+  const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 , difficulty: 'easy' });
   const [showConfig, setShowConfig] = useState(true);
   const [degree, setDegree] = useState('');
   const [course, setCourse] = useState('');
@@ -72,13 +72,13 @@ const [time,setTime]=useState<number>(0);
 useEffect(() => {
   document.title = `LearnX | ${topic}`;
 }, [topic]);
-  const fetchMCQs = async (count: number) => {
+  const fetchMCQs = async (count: number,difficulty:string) => {
     setTimeLeft(quizConfig.timeLimit * 60); // convert minutes to seconds
     setTime(timeLeft);
     setLoading(true);
     try {
       const [res, res1] = await Promise.all([
-        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count ,profileData}),
+        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count ,profileData, difficulty }),
         axios.post('https://learnx-ed1w.onrender.com/api/queries', { topic, userID, email })
       ]);
       setMcqs(res.data.mcqs);
@@ -303,6 +303,22 @@ setReport(generatedReport);
   </div>
 
   <div className="scroll-picker-section">
+    <label>Difficulty Level</label>
+    <div className="scroll-picker">
+      <select
+        value={quizConfig.difficulty}
+        onChange={(e) =>
+          setQuizConfig({ ...quizConfig, difficulty: e.target.value })
+        }
+      >
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </div>
+  </div>
+
+  <div className="scroll-picker-section">
     <label>Time Limit</label>
     <div className="time-picker-container">
       <select
@@ -349,7 +365,7 @@ setReport(generatedReport);
     className="start-button"
     onClick={() => {
       setShowConfig(false);
-      fetchMCQs(quizConfig.count);
+      fetchMCQs(quizConfig.count, quizConfig.difficulty);
     }}
   >
     Start Quiz

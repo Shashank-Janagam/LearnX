@@ -159,14 +159,14 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export async function generateMCQs(topic, count, profileData) {
+export async function generateMCQs(topic, count, profileData,difficulty = 'easy') {
   const { name, education, stats, recentQuizzes } = profileData;
 
   const prompt = `
 You are an intelligent quiz generator for a personalized learning platform called LearnX.
 
 Generate "${count}" multiple-choice questions (MCQs) on the topic "${topic}" based on the following student's profile:
-
+difficulty: ${difficulty} choosen by user
 Student Name: ${name}
 Degree: ${education?.degree || 'Not specified'}
 Course: ${education?.course || 'Not specified'}
