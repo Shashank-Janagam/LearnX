@@ -242,7 +242,7 @@ const handleHistoryClick = async (topic: string) => {
               </h1>
             </div>
             <p className="hero-subtitle">
-              Discover knowledge through AI-Powered learning. Ask questions, explore topics, and expand your understanding.
+              Discover knowledge through AI-Powered learning. Explore topics, and expand your understanding.
             </p>
           </div>
 
