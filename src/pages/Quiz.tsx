@@ -420,7 +420,7 @@ setReport(generatedReport);
                   )}
             </div>
 
-          {report === '' && !isgenerating ? (
+          {report === '' && isgenerating ? (
   <div className="report-loading">
     <h3>🔍 Generating AI Report...</h3>
     <div className="spinner"></div>
