@@ -166,7 +166,19 @@ export async function generateMCQs(topic, count, profileData,difficulty = 'easy'
 You are an intelligent quiz generator for a personalized learning platform called LearnX.
 
 Generate "${count}" multiple-choice questions (MCQs) on the topic "${topic}" based on the following student's profile:
+from 
+Introductory
+
+Basic
+
+Intermediate
+
+Advanced
+
+Expert
+
 difficulty: ${difficulty} choosen by user
+
 Student Name: ${name}
 Degree: ${education?.degree || 'Not specified'}
 Course: ${education?.course || 'Not specified'}

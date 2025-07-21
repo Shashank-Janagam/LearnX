@@ -315,9 +315,12 @@ setReport(generatedReport);
           setQuizConfig({ ...quizConfig, difficulty: e.target.value })
         }
       >
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
+        <option value="introductory">Introductory</option>
+        <option value="basic">Basic</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+        <option value="expert">Expert</option>
+
       </select>
     </div>
   </div>
