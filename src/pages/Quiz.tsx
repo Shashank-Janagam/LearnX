@@ -417,7 +417,13 @@ setReport(generatedReport);
             </div>
 
           
-                                    {report && (
+              {report==null?(
+                <div className="report-loading">
+                  <h3>🔍 Generating AI Report...</h3>
+                  <div className="spinner"></div>
+                </div>
+
+                                    ) : (
               <div className="report-section">
                 <h3>🧠 AI Feedback Report</h3>
                 <p style={{ whiteSpace: 'pre-line' }}>{report}</p>
