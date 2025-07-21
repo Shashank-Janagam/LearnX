@@ -480,7 +480,7 @@ setReport(generatedReport);
               <div className="submit-all-container">
                 <button
                   onClick={handleSubmitAll}
-                  disabled={Object.keys(selectedAnswers).length !== mcqs.length}
+                  // disabled={Object.keys(selectedAnswers).length !== mcqs.length}
                   className="submit-button"
                 >
                   Submit All Answers
