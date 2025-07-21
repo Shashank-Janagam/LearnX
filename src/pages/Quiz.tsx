@@ -4,6 +4,7 @@ import axios from 'axios';
 import './Quiz.css';
 import './Home.tsx';
 import { Divide } from 'lucide-react';
+import { set } from 'mongoose';
 
 interface MCQOption {
   text: string;
@@ -33,6 +34,7 @@ const [time,setTime]=useState<number>(0);
   const [profileData, setProfileData] = useState(null);
   const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 , difficulty: 'easy' });
   const [showConfig, setShowConfig] = useState(true);
+  const [isgenerating, setIsGenerating] = useState(false);
   const [degree, setDegree] = useState('');
   const [course, setCourse] = useState('');
   const [institution, setInstitution] = useState('');
@@ -167,6 +169,8 @@ const calculateScore = () => {
 };
 
   const handleSubmitAll = async () => {
+    setIsGenerating(true);
+    
     const allResults: { [key: number]: boolean } = {};
     mcqs.forEach((_, index) => {
       allResults[index] = true;
@@ -416,19 +420,18 @@ setReport(generatedReport);
                   )}
             </div>
 
-          
-              {report===''?(
-                <div className="report-loading">
-                  <h3>🔍 Generating AI Report...</h3>
-                  <div className="spinner"></div>
-                </div>
+          {report === '' && !isgenerating ? (
+  <div className="report-loading">
+    <h3>🔍 Generating AI Report...</h3>
+    <div className="spinner"></div>
+  </div>
+) : report!==''?(
+  <div className="report-section">
+    <h3>🧠 AI Feedback Report</h3>
+    <p style={{ whiteSpace: 'pre-line' }}>{report}</p>
+  </div>
+):null}
 
-                                    ) : (
-              <div className="report-section">
-                <h3>🧠 AI Feedback Report</h3>
-                <p style={{ whiteSpace: 'pre-line' }}>{report}</p>
-              </div>
-            )}
 
             <div className="questions-grid">
               {mcqs.map((mcq, qIndex) => (
