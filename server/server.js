@@ -34,6 +34,7 @@ app.use('/api/queries', queryRoutes);
 app.use('/quiz', quizRoutes);
 app.use('/history', historyRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/gemini-doubt-chat', quizRoutes);
 // ✅ Test MongoDB connection
 const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI, {

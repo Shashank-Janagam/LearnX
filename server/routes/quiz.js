@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateMCQs,generateReport }   from '../utils/generateMCQs.js'; // Adjust the path as needed
+import { generateMCQs,generateReport ,generateDoubtChatResponse}   from '../utils/generateMCQs.js'; // Adjust the path as needed
 import QuizResult from '../models/QuizResult.js';
 
 const router =express.Router();
@@ -53,6 +53,18 @@ router.post('/save-result', async (req, res) => {
   }
 });
 
+router.post('/gemini-doubt-chat', async (req, res) => {
+  const { messages, userMcqs } = req.body;
+  console.log('Incoming messages:', messages);
+  console.log('Incoming userMcqs:', userMcqs);
+  try {
+    const aiReply = await generateDoubtChatResponse(messages, userMcqs);
+    res.status(200).json({ content: aiReply });
+  } catch (error) {
+    console.error('❌ Error generating doubt chat response:', error.message);
+    res.status(500).json({ error: 'Failed to generate AI response.' });
+  }
+});
 
 
 // res.json({ mcqs });

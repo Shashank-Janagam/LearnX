@@ -285,3 +285,38 @@ Do not repeat the instructions or raw data.
   }
 }
 
+
+
+export async function generateDoubtChatResponse(messages, userMcqs = []) {
+  const conversationHistory = messages
+    .map(msg => `${msg.role === 'user' ? '🧑 User' : '🤖 AI'}: ${msg.content}`)
+    .join('\n');
+
+  const mcqContext = userMcqs.length
+    ? `\n📚 User's MCQ Attempt Summary:\n${JSON.stringify(userMcqs, null, 2)}\n`
+    : '';
+
+  const prompt = `
+You are a smart AI tutor helping a student with quiz-related doubts.
+
+Below is the conversation between the user and the AI. Use it to provide a helpful, accurate, and brief response to the user's latest message.
+
+${conversationHistory}
+${mcqContext}
+
+🎯 Instructions:
+- If the user is confused about an MCQ, give a clear explanation.
+- Use the MCQs only if relevant to the question.
+- Keep response helpful, positive, and concise (2–4 lines).
+- Avoid repeating previous messages.
+`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error) {
+    console.error('❌ Error generating doubt chat response:', error.message);
+    return '⚠️ Sorry, I could not process your question right now.';
+  }
+}
