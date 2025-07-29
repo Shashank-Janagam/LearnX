@@ -98,11 +98,153 @@ body {
   height: 40px;
   animation: spin 0.8s linear infinite;
 }
+/* .history-sidebar {
+  position: fixed;
+  top: 0;
+  left: -110%;
+  width: 40%;
+  height: 100vh;
+  background-color: #2a2e3e;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  transition: left 0.5s ease;
+  z-index: 999;
+  overflow-y: auto;
+  border-radius: 0 0 1rem 1rem;
+} */
 
+/* .history-sidebar.open {
+  left: 10;
+  right:20%
+} */
+
+.history-sidebar {
+    width: 35vw;
+    left: -36%;
+    border-radius: 0 1rem 1rem 0;
+      display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* background-color: #0f172a; */
+  overflow: hidden;
+  }
+
+  .history-sidebar.open {
+    left: 0;
+  }
+  .logos {
+  padding: 1rem;
+  flex-shrink: 0;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
+}
+.chat-messages {
+  flex: 1;
+  height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* start at top */
+  gap: 0.75rem;
+  scroll-behavior: smooth; 
+  scrollbar-width: none;    /* smooth feel when we scroll via JS */
+  overscroll-behavior: contain;/* prevent background page scrolling */
+}
+
+.msg {
+  max-width: 90%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  word-wrap: break-word;
+  font-size: 0.95rem;
+  white-space: pre-wrap;     /* preserve \n as real line breaks */
+  overflow-wrap: anywhere;   /* prevent long tokens from overflowing */
+  padding-top: 0rem;
+  padding-bottom: 0rem
+
+
+}
+
+.msg.bot-msg {
+  align-self: flex-start;
+  background-color: #2c2f3b;
+  color: #fff;
+  border-top-left-radius: 0;
+}
+
+.msg.user-msg {
+  align-self: flex-end;
+  background-color: #0a63c9;
+  color: #fff;
+  border-top-right-radius: 0;
+}
+
+
+
+.search-form {
+   flex-shrink: 0;
+  padding: 1rem;
+
+}
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  background-color: #1e293b;
+  width: 100%;
+  max-width: 600px;
+}
+.search-wrapper:focus-within {
+  border: 1px solid #38bdf8;
+}
+
+/* Input stretches to fill space */
+.search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: white;
+  /* outline: none; */
+  font-size: 1rem;
+}
+
+/* Search button */
+.search-submit {
+  background-color: #334155;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+}
+
+.search-submit:hover {
+  background-color: #475569;
+}
+
+.search-submit:hover {
+  background-color: #475569;
+}
+
+
+.search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-icon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .config-section, .loading-section, .error-section, .questions-section {

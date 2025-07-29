@@ -561,7 +561,7 @@ br.history-header {
 }
 
 /* Sidebar */
-.history-sidebar {
+.history-sidebar1 {
   position: fixed;
   top: 0;
   left: -110%;
@@ -576,7 +576,7 @@ br.history-header {
   border-radius: 0 0 1rem 1rem;
 }
 
-.history-sidebar.open {
+.history-sidebar1.open {
   left: 10;
   right:20%
 }
@@ -637,13 +637,14 @@ br.history-header {
     justify-content: center;
   }
 
-  .history-sidebar {
-    width: 17vw;
-    left: -19%;
+  .history-sidebar1 {
+    width: 20vw;
+    left: -21%;
     border-radius: 0 1rem 1rem 0;
+    scrollbar-width: none;
   }
 
-  .history-sidebar.open {
+  .history-sidebar1.open {
     left: 0;
   }
 

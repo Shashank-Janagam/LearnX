@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Quiz.css';
 import './Home.tsx';
 import { Divide } from 'lucide-react';
 import { set } from 'mongoose';
+import { Search, User, Sparkles } from 'lucide-react';
+import ReactMarkdown from "react-markdown";
 
 interface MCQOption {
   text: string;
@@ -22,7 +24,8 @@ function Quiz() {
   const navigate = useNavigate();
   const { topic, userID, email } = state || {};
   const [report, setReport] = useState<string>(''); // New state
-
+  const chatRef = useRef<HTMLDivElement>(null);
+  const [chat, setChat] = useState('Ask a Doubt or Explore a Topic');
   const [mcqs, setMcqs] = useState<MCQ[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({});
@@ -35,11 +38,14 @@ const [time,setTime]=useState<number>(0);
   const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 , difficulty: 'easy' });
   const [showConfig, setShowConfig] = useState(true);
   const [isgenerating, setIsGenerating] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [degree, setDegree] = useState('');
   const [course, setCourse] = useState('');
   const [institution, setInstitution] = useState('');
   const [isEditingEducation, setIsEditingEducation] = useState(false);
   const [role, setRole]=useState('');
+const [res, setRes] = useState(null); // holds the user MCQ result
   useEffect(() => {
 
     const storedEmail=sessionStorage.getItem('userEmail');
@@ -48,7 +54,16 @@ const [time,setTime]=useState<number>(0);
     }
   }, []);
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientX <= 10) {
+        setIsChatOpen(true);
+      }
+    };
 
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -111,12 +126,22 @@ useEffect(() => {
         }
         return prevTime - 1;
       });
+
     }, 1000);
     return () => clearInterval(timer);
   }
 }, [showConfig, timeLeft, mcqs, showResults]);
 
+   useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatRef.current && !chatRef.current.contains(e.target as Node)) {
+        setIsChatOpen(false);
+      }
+    };
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 const saveQuizResult = async (email, topic, score) => {
   try {
     const response = await axios.post('https://learnx-ed1w.onrender.com/api/profile/quiz', {
@@ -170,14 +195,17 @@ const calculateScore = () => {
 
   const handleSubmitAll = async () => {
     setIsGenerating(true);
+
     
     const allResults: { [key: number]: boolean } = {};
     mcqs.forEach((_, index) => {
       allResults[index] = true;
     });
     setShowResults(allResults);
+    setIsChatOpen(true);
+    
 
-      const responses = mcqs.map((mcq, index) => {
+    const responses = mcqs.map((mcq, index) => {
     const selectedIndex = selectedAnswers[index];
     const selectedOption = mcq.options[selectedIndex];
     return {
@@ -191,7 +219,16 @@ const calculateScore = () => {
   });
 
     const score = calculateScore();
-
+    setRes({
+      topic,
+      score,
+      total: mcqs.length,
+      responses,
+      time,
+      timeLeft,
+      profileData
+    });
+    setIsSubmitted(true);
 
 
    const result =await axios.post('https://learnx-ed1w.onrender.com/quiz/report', {
@@ -377,7 +414,10 @@ setReport(generatedReport);
   >
     Start Quiz
   </button>
+    
+
 </div>
+
 
           </div>
         ) : loading ? (
@@ -423,7 +463,11 @@ setReport(generatedReport);
                   )}
             </div>
 
-          {report === '' && isgenerating ? (
+         {isSubmitted && <DoubtChat quizData={res} />}
+
+      
+
+        {report === '' && isgenerating ? (
   <div className="report-loading">
     <h3>🔍 Generating AI Report...</h3>
     <div className="spinner"></div>
@@ -434,6 +478,9 @@ setReport(generatedReport);
     <p style={{ whiteSpace: 'pre-line' }}>{report}</p>
   </div>
 ):null}
+
+
+
 
 
             <div className="questions-grid">
@@ -501,10 +548,158 @@ setReport(generatedReport);
             )}
           </div>
         )}
+
+
       </main>
+      
     </div>
+
+    
   );
 }
 
-export default Quiz;
 
+const DoubtChat = ({ quizData }) => {
+    // You can now use quizData inside this component
+    // console.log("Received MCQs:", quizData); // ✅ For testing
+
+    const chatRef = useRef<HTMLDivElement>(null);
+    const [chat, setChat] = useState('')
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(true);
+
+
+
+  
+
+  const [messages, setMessages] = useState([  ]);
+  const handleDoubt = async (e) => {
+    e.preventDefault();
+
+    const newUserMessage = { role: "user", content: chat.trim() };
+    const updatedMessages = [...messages, newUserMessage];
+
+    setMessages(updatedMessages); // ✅ Add user message
+    setChat('');
+    console.log(quizData, "from frontend");
+    try {
+      const res = await fetch('https://learnx-ed1w.onrender.com/quiz/gemini-doubt-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updatedMessages, userMcqs: quizData }), // ✅ Use updatedMessages, not old messages
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error: ${res.status} - ${text}`);
+      }
+
+      const data = await res.json();
+      console.log('AI response:', data.content);
+
+      // ✅ Add AI response to chat
+      const aiMessage = { role: 'assistant', content: data.content };
+      setMessages((prev) => [...prev, aiMessage]);
+
+    } catch (err) {
+      console.error('❌ Fetch error:', err.message);
+    }
+  };
+useEffect(() => {
+  if (isChatOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'auto';
+  }
+
+  return () => {
+    document.body.style.overflow = 'auto'; // Always reset on unmount
+  };
+}, [isChatOpen]);
+
+    useEffect(() => {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (chatRef.current && !chatRef.current.contains(e.target as Node)) {
+          setIsChatOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+  useEffect(() => {
+      const handleMouseMove = (e: MouseEvent) => {
+        if (e.clientX <= 10) {
+          setIsChatOpen(true);
+        }
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
+const messagesRef = useRef(null);
+const endRef = useRef(null);
+
+useEffect(() => {
+  endRef.current?.scrollIntoView({ behavior: 'smooth' });
+}, [messages]);
+
+    return (
+      <>
+        {isSubmitted ? (
+          <div
+            ref={chatRef}
+            className={`history-sidebar ${isChatOpen ? 'open' : ''}`}
+          >
+            <div className="logos">
+              <div className="logo-container" id="slider">
+                <div className="logo-icon">
+                  <span className="logo-text">LearnX</span>
+                </div>
+              </div>
+              <h2 className="history-title">AI Doubt Session</h2>
+
+
+              <div className="chat-wrapper">
+
+  <div className="chat-messages">
+      {messages.map((msg, index) => (
+    <div key={index} className={`msg ${msg.role === 'user' ? 'user-msg' : 'bot-msg'}`}>
+      <ReactMarkdown>{msg.content}</ReactMarkdown>
+      </div>
+    ))}
+      <div ref={endRef} />   {/* anchor */}
+
+
+
+    </div>
+              <form className="search-form" onSubmit={handleDoubt} >
+                <div className="search-wrapper">
+                  <input
+                    type="text"
+                    value={chat}
+                    onChange={(e) => setChat(e.target.value)}
+                    placeholder="Ask a Doubt or Explore a Topic"
+                    className="search-input"
+                  />
+                  <button
+                    type="submit"
+                    className="search-submit"
+                    disabled={!chat.trim()}
+                  >
+                    <Search className="search-icon" />
+                  </button>
+                </div>
+              </form>
+            </div></div>
+          </div>
+        ) : null}
+      </>
+    );
+  };
+  export default Quiz;
+
+
+
+
+  

@@ -203,7 +203,7 @@ const handleHistoryClick = async (topic: string) => {
       </header>
           <div
             ref={historyRef}
-            className={`history-sidebar ${isHistoryOpen ? 'open' : ''}`}
+            className={`history-sidebar1 ${isHistoryOpen ? 'open' : ''}`}
           >
             <div className='logos' onClick={() => setIsHistoryOpen(false)}>
           <div className="logo-container" id="slider">
@@ -227,6 +227,8 @@ const handleHistoryClick = async (topic: string) => {
               ))}
             </div>
           </div>
+
+        
 
       {/* Main Content */}
       <main className="main-content">
