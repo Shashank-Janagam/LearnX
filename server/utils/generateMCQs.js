@@ -405,7 +405,7 @@ ${conv}
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
