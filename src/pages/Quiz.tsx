@@ -202,7 +202,6 @@ const calculateScore = () => {
       allResults[index] = true;
     });
     setShowResults(allResults);
-    setIsChatOpen(true);
     
 
     const responses = mcqs.map((mcq, index) => {
@@ -296,9 +295,22 @@ setReport(generatedReport);
         <div className="logo-container">
           <div className="logo-icon">
             <span className="logo-text">LearnX</span>
-          </div>
-        </div>
+
+
+                </div>
+              </div>
+
+        {isSubmitted && !isChatOpen && (<button className="ai-launch-btn" aria-label="Open AI Chat" onClick={() => setIsChatOpen(true)}>
+  <span className="icon">🤖</span>
+  <span className="label">Ask AI</span>
+  <span className="dot"></span> 
+</button>)};
+
+
+
           <div className="quiz-info">
+
+
 
             <span className="topic-badge">{topic}</span>
             {totalAnswered > 0 && (
@@ -463,9 +475,13 @@ setReport(generatedReport);
                   )}
             </div>
 
-         {isSubmitted && <DoubtChat quizData={res} />}
-
-      
+{isSubmitted && (
+  <DoubtChat
+    quizData={res}
+    isChatOpen={isChatOpen}
+    setIsChatOpen={setIsChatOpen}
+  />
+)}
 
         {report === '' && isgenerating ? (
   <div className="report-loading">
@@ -559,13 +575,12 @@ setReport(generatedReport);
 }
 
 
-const DoubtChat = ({ quizData }) => {
+const DoubtChat = ({ quizData, isChatOpen, setIsChatOpen }) => {
     // You can now use quizData inside this component
     // console.log("Received MCQs:", quizData); // ✅ For testing
 
     const chatRef = useRef<HTMLDivElement>(null);
     const [chat, setChat] = useState('')
-    const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(true);
 
 
