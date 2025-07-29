@@ -55,8 +55,8 @@ router.post('/save-result', async (req, res) => {
 
 router.post('/gemini-doubt-chat', async (req, res) => {
   const { messages, userMcqs } = req.body;
-  console.log('Incoming messages:', messages);
-  console.log('Incoming userMcqs:', userMcqs);
+  // console.log('Incoming messages:', messages);
+  // console.log('Incoming userMcqs:', userMcqs);
   try {
     const aiReply = await generateDoubtChatResponse(messages, userMcqs);
     res.status(200).json({ content: aiReply });

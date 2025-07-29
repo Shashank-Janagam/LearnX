@@ -285,16 +285,31 @@ Do not repeat the instructions or raw data.
   }
 }
 
-
-
 export async function generateDoubtChatResponse(messages, userMcqs = []) {
   const conversationHistory = messages
     .map(msg => `${msg.role === 'user' ? '🧑 User' : '🤖 AI'}: ${msg.content}`)
     .join('\n');
 
-  const mcqContext = userMcqs.length
-    ? `\n📚 User's MCQ Attempt Summary:\n${JSON.stringify(userMcqs, null, 2)}\n`
-    : '';
+  let mcqContext = '';
+  if (userMcqs && typeof userMcqs === 'object' && Object.keys(userMcqs).length > 0) {
+    const { profileData, topic, score, total, responses } = userMcqs;
+
+    const name = profileData?.name || 'Student';
+    mcqContext += `\n👤 Name: ${name}\n📘 Topic: ${topic}\n🏆 Score: ${score}/${total}\n`;
+
+    if (Array.isArray(responses)) {
+      mcqContext += `\n📚 MCQ Attempt Summary:\n`;
+
+      responses.forEach((r, i) => {
+        mcqContext += `
+Q${i + 1}: ${r.question}
+- Selected: ${r.selectedOption}
+- Correct: ${r.correctOption}
+- Explanation: ${r.explanation}
+- Is Correct: ${r.isCorrect ? '✅ Yes' : '❌ No'}\n`;
+      });
+    }
+  }
 
   const prompt = `
 You are a smart AI tutor helping a student with quiz-related doubts.
@@ -307,6 +322,7 @@ ${mcqContext}
 🎯 Instructions:
 - If the user is confused about an MCQ, give a clear explanation.
 - Use the MCQs only if relevant to the question.
+- If user asks "what is my name?" respond with their name.
 - Keep response helpful, positive, and concise (2–4 lines).
 - Avoid repeating previous messages.
 `;
