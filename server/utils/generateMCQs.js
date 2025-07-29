@@ -276,7 +276,7 @@ Do not repeat the instructions or raw data.
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' }); // ✅ correct
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-pro' }); // ✅ correct
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
@@ -285,50 +285,127 @@ Do not repeat the instructions or raw data.
   }
 }
 
-export async function generateDoubtChatResponse(messages, userMcqs = []) {
-  const conversationHistory = messages
-    .map(msg => `${msg.role === 'user' ? '🧑 User' : '🤖 AI'}: ${msg.content}`)
-    .join('\n');
 
-  let mcqContext = '';
-  if (userMcqs && typeof userMcqs === 'object' && Object.keys(userMcqs).length > 0) {
-    const { profileData, topic, score, total, responses } = userMcqs;
+function fmt(val, fallback = 'Not specified') {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === 'string' && val.trim() === '') return fallback;
+  return val;
+}
 
-    const name = profileData?.name || 'Student';
-    mcqContext += `\n👤 Name: ${name}\n📘 Topic: ${topic}\n🏆 Score: ${score}/${total}\n`;
+function summarizeResponses(responses = [], limit = 8) {
+  const safe = Array.isArray(responses) ? responses : [];
+  const total = safe.length;
+  const incorrect = safe.filter(r => !r?.isCorrect);
+  const correct = safe.filter(r => r?.isCorrect);
 
-    if (Array.isArray(responses)) {
-      mcqContext += `\n📚 MCQ Attempt Summary:\n`;
+  const pick = safe.slice(0, limit).map((r, i) => {
+    const q = (r?.question || '').replace(/\s+/g, ' ').trim();
+    const sel = fmt(r?.selectedOption, '—');
+    const cor = fmt(r?.correctOption, '—');
+    const exp = fmt(r?.explanation, '—');
+    return `Q${i + 1}: ${q}
+- Selected: ${sel}
+- Correct: ${cor}
+- Correct? ${r?.isCorrect ? '✅' : '❌'}
+- Explanation: ${exp}`;
+  }).join('\n\n');
 
-      responses.forEach((r, i) => {
-        mcqContext += `
-Q${i + 1}: ${r.question}
-- Selected: ${r.selectedOption}
-- Correct: ${r.correctOption}
-- Explanation: ${r.explanation}
-- Is Correct: ${r.isCorrect ? '✅ Yes' : '❌ No'}\n`;
-      });
-    }
+  return {
+    total,
+    correctCount: correct.length,
+    incorrectCount: incorrect.length,
+    sampleBlock: pick
+  };
+}
+
+function lastUserMessage(messages = []) {
+  const m = Array.isArray(messages) ? messages : [];
+  for (let i = m.length - 1; i >= 0; i--) {
+    if (m[i]?.role === 'user' && m[i]?.content) return m[i].content;
   }
+  return '';
+}
 
+function compactConversation(messages = [], limit = 8) {
+  const m = Array.isArray(messages) ? messages : [];
+  const tail = m.slice(-limit);
+  return tail.map(msg => {
+    const who = msg.role === 'user' ? '🧑 User' : '🤖 AI';
+    const text = (msg.content || '').toString().trim();
+    return `${who}: ${text}`;
+  }).join('\n');
+}
+
+export async function generateDoubtChatResponse(messages = [], userMcqs = {}) {
+  // Extract & sanitize user context
+  const profile = userMcqs?.profileData || {};
+  const stats = profile?.stats || userMcqs?.stats || {};
+  const name = fmt(profile?.name, 'Student');
+  const degree = fmt(profile?.education?.degree);
+  const course = fmt(profile?.education?.course);
+  const institution = fmt(profile?.education?.institution);
+  const role = fmt(profile?.education?.role || profile?.role || 'Student');
+
+  const topic = fmt(userMcqs?.topic, '');
+  const score = Number.isFinite(userMcqs?.score) ? userMcqs.score : undefined;
+  const total = Number.isFinite(userMcqs?.total) ? userMcqs.total : undefined;
+  const time = Number.isFinite(userMcqs?.time) ? userMcqs.time : undefined;
+  const timeLeft = Number.isFinite(userMcqs?.timeLeft) ? userMcqs.timeLeft : undefined;
+
+  const { sampleBlock, correctCount, incorrectCount, total: answered } =
+    summarizeResponses(userMcqs?.responses, 8);
+
+  const conv = compactConversation(messages, 10);
+  const userLast = lastUserMessage(messages);
+
+  // Build a rich, structured prompt
   const prompt = `
-You are a smart AI tutor helping a student with quiz-related doubts.
+You are a helpful, respectful AI tutor for LearnX. Analyze the student's full context and respond appropriately.
 
-Below is the conversation between the user and the AI. Use it to provide a helpful, accurate, and brief response to the user's latest message.
+=== STUDENT PROFILE ===
+Name: ${name}
+Role: ${role}
+Degree: ${degree}
+Course: ${course}
+Institution: ${institution}
 
-${conversationHistory}
-${mcqContext}
+=== PAST PERFORMANCE (if available) ===
+Total Quizzes: ${fmt(stats?.totalQuizzes, 'Unknown')}
+Average Score: ${fmt(stats?.averageScore, 'Unknown')}%
+Recent Topic: ${fmt(stats?.recentTopic, 'Unknown')}
 
-🎯 Instructions:
-- If the user is confused about an MCQ, give a clear explanation.
-- Use the MCQs only if relevant to the question.
-- If user asks "what is my name?" respond with their name.
-- Keep response helpful, positive, and concise (2–4 lines).
-- Avoid repeating previous messages.
+=== CURRENT QUIZ (if available) ===
+Topic: ${fmt(topic, '—')}
+Score: ${Number.isFinite(score) && Number.isFinite(total) ? `${score}/${total}` : '—'}
+Time Given: ${fmt(time, '—')} sec
+Time Left: ${fmt(timeLeft, '—')} sec
+Answered: ${answered ?? 0}, Correct: ${correctCount ?? 0}, Incorrect: ${incorrectCount ?? 0}
+
+=== SAMPLE OF RESPONSES (truncated) ===
+${sampleBlock || '—'}
+
+=== CONVERSATION (truncated) ===
+${conv}
+
+=== TASK ===
+1) You can answer ANY subject or topic the student asks, not just quiz questions. Use your general knowledge to teach clearly.
+2) IF the question relates to the quiz/topic or their performance, personalize using the data above (responses, score, explanations, timing).
+3) If the user asks “what is my name?”, answer with "${name}".
+4) If information is missing, acknowledge the gap briefly rather than guessing.
+5) Keep responses concise. Prefer:
+   - TL;DR (one line)
+   - Key ideas (bullets)
+   - Tiny example (code/math if relevant)
+   - Common mistakes
+   - 1–2 quick practice tasks or next steps
+6) If the question is ambiguous, ask a brief clarifying question first.
+
+=== USER'S LATEST MESSAGE ===
+"${userLast}"
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-pro' });
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
