@@ -13,6 +13,9 @@ const VerifyEmail = () => {
       try {
         const res = await axios.get(`https://learnx-ed1w.onrender.com/auth/verify-email?token=${token}`);
         setMessage('✅ Email verified! You can now login.');
+        setTimeout(() => {
+          window.location.href = '/Login'; // Redirect to login after verification
+        }, 3000);
       } catch (err) {
         setMessage('❌ Verification link is invalid or expired.');
       }
