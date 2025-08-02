@@ -561,7 +561,7 @@ br.history-header {
 }
 
 /* Sidebar */
-.history-sidebar1 {
+/* .history-sidebar1 {
   position: fixed;
   top: 0;
   left: -110%;
@@ -579,7 +579,31 @@ br.history-header {
 .history-sidebar1.open {
   left: 10;
   right:20%
+} */
+
+/* Mobile-friendly Sidebar */
+.history-sidebar1 {
+  position: fixed;
+  top: 0;
+  left: -100%; /* Start hidden */
+  width: 80%; /* 80% of viewport on mobile */
+  max-width: 300px;
+  height: 100vh;
+  background-color: #2a2e3e;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  transition: left 0.4s ease-in-out;
+  z-index: 9999;
+  overflow-y: auto;
+  border-radius: 0 1rem 1rem 0;
+  scrollbar-width: none; /* Hide scrollbar */
 }
+
+/* Show sidebar when open */
+.history-sidebar1.open {
+  left: 0;
+}
+
 
 .history-title {
   font-size: 1.2rem;
@@ -641,7 +665,6 @@ br.history-header {
     width: 20vw;
     left: -21%;
     border-radius: 0 1rem 1rem 0;
-    scrollbar-width: none;
   }
 
   .history-sidebar1.open {

@@ -304,7 +304,7 @@ setReport(generatedReport);
   <span className="icon">🤖</span>
   <span className="label">Ask AI</span>
   <span className="dot"></span> 
-</button>)};
+</button>)}
 
 
 
@@ -333,6 +333,8 @@ setReport(generatedReport);
 
       <main className="quiz-main">
         {showConfig ? (
+          <div className="page-container">
+
           <div className="config-section">
             <div className="config-card">
   <h2>Configure Your Quiz</h2>
@@ -350,8 +352,10 @@ setReport(generatedReport);
           <option key={i} value={i + 1}>
             {i + 1} 
           </option>
+          
         ))}
       </select>
+      </div>
     </div>
   </div>
 
