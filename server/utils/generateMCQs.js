@@ -276,7 +276,7 @@ Do not repeat the instructions or raw data.
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-pro' }); // ✅ correct
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' }); // ✅ correct
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
