@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Groups.css';
@@ -39,12 +39,7 @@ function Groups() {
     document.title = 'LearnX | Study Groups';
   }, []);
 
-  // Fetch user's groups
-  useEffect(() => {
-    fetchMyGroups();
-  }, []);
-
-  const fetchMyGroups = async () => {
+  const fetchMyGroups = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${HOST_SERVER}/api/groups/my-groups/${userID}`);
@@ -54,7 +49,12 @@ function Groups() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userID]);
+
+  // Fetch user's groups
+  useEffect(() => {
+    fetchMyGroups();
+  }, [fetchMyGroups]);
 
   // Search public groups
   useEffect(() => {
@@ -127,17 +127,7 @@ function Groups() {
     }
   };
 
-  const formatTime = (dateStr) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diff = now - d;
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-    return d.toLocaleDateString();
-  };
+
 
   return (
     <div className="groups-container">

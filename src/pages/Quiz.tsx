@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Quiz.css';
 import './Home.tsx';
-import { Search, User, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import ReactMarkdown from "react-markdown";
 
 const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
@@ -25,7 +25,6 @@ function Quiz() {
   const { topic, userID, email } = state || {};
   const [report, setReport] = useState<string>(''); // New state
   const chatRef = useRef<HTMLDivElement>(null);
-  const [chat, setChat] = useState('Ask a Doubt or Explore a Topic');
   const [mcqs, setMcqs] = useState<MCQ[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({});
@@ -34,18 +33,12 @@ function Quiz() {
   const [error, setError] = useState<string>('');
 const [timeLeft, setTimeLeft] = useState<number>(0);
 const [time,setTime]=useState<number>(0);
-  const [queries, setQueries] = useState([]);
   const [profileData, setProfileData] = useState(null);
   const [quizConfig, setQuizConfig] = useState({ count: 5, timeLimit: 5 , difficulty: 'easy' });
   const [showConfig, setShowConfig] = useState(true);
   const [isgenerating, setIsGenerating] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [degree, setDegree] = useState('');
-  const [course, setCourse] = useState('');
-  const [institution, setInstitution] = useState('');
-  const [isEditingEducation, setIsEditingEducation] = useState(false);
-  const [role, setRole]=useState('');
 const [res, setRes] = useState(null); // holds the user MCQ result
   useEffect(() => {
 
@@ -72,12 +65,6 @@ const [res, setRes] = useState(null); // holds the user MCQ result
           `${HOST_SERVER}/api/profile/email/${encodeURIComponent(email)}`
         );
         setProfileData(response.data);
-        if (response.data.education) {
-          const { degree, course, institution } = response.data.education;
-          setDegree(degree || '');
-          setCourse(course || '');
-          setInstitution(institution || '');
-        }
       } catch (err) {
         console.error('Error fetching profile:', err);
       }
@@ -231,7 +218,7 @@ setReport(generatedReport);
 
 
   try {
-    const [resResult, resQuery] = await Promise.all([
+    await Promise.all([
       axios.post(`${HOST_SERVER}/quiz/save-result`, {
         userID,
         email,
@@ -244,7 +231,6 @@ setReport(generatedReport);
       axios.post(`${HOST_SERVER}/api/queries`, { topic, userID, email })
     ]);
 
-    setQueries((prev) => [resQuery.data, ...prev]);
     console.log('✅ Quiz result and history topic saved');
   } catch (err) {
     console.error('❌ Failed to save quiz result or history topic:', err);
@@ -619,8 +605,8 @@ const DoubtChat = ({ quizData, isChatOpen, setIsChatOpen }) => {
     // console.log("Received MCQs:", quizData); // ✅ For testing
 
     const chatRef = useRef<HTMLDivElement>(null);
-    const [chat, setChat] = useState('')
-    const [isSubmitted, setIsSubmitted] = useState(true);
+    const [chat, setChat] = useState('');
+    const isSubmitted = true;
 
 
 
@@ -681,7 +667,6 @@ useEffect(() => {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [setIsChatOpen]);
-const messagesRef = useRef(null);
 const endRef = useRef(null);
 
 useEffect(() => {

@@ -84,12 +84,14 @@ function GroupDetail() {
     if (activeTab === 'rooms') fetchRooms();
     if (activeTab === 'members') fetchMembers();
     if (activeTab === 'modules') fetchModules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
     if (group) {
       fetchModules();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group]);
 
   // Listen for new rooms via socket

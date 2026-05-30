@@ -74,6 +74,7 @@ const ModuleDetail: React.FC = () => {
       return;
     }
     fetchModuleDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moduleId, currentUserId]);
 
   const fetchModuleDetails = async () => {

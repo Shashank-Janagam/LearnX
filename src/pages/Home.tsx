@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, Sparkles, Users, UserPlus, BookOpen, Plus, Award, Clock, ChevronRight, BookOpen as BookIcon } from 'lucide-react';
+import { Search, User, Users, UserPlus, BookOpen, Plus, Award, Clock, ChevronRight, BookOpen as BookIcon } from 'lucide-react';
 import '../styles/Home.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';

@@ -16,7 +16,6 @@ function CollabLobby() {
   const [error, setError] = useState('');
 
   const userID = sessionStorage.getItem('userID');
-  const userName = sessionStorage.getItem('userName');
 
   useEffect(() => {
     if (!sessionStorage.getItem('userEmail')) navigate('/');

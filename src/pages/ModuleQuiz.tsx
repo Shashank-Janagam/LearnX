@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Search, ArrowLeft, Brain, Award, Play } from 'lucide-react';
+import { Search, ArrowLeft, Brain } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ThemeToggle from '../components/ThemeToggle.tsx';
 import '../styles/ModuleQuiz.css';
@@ -41,15 +41,18 @@ function ModuleQuiz() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [submittedData, setSubmittedData] = useState<any>(null);
 
-  useEffect(() => {
-    if (!userID || !userEmail) {
-      navigate('/');
-      return;
-    }
-    fetchQuestions();
-  }, [moduleId, quizIndex]);
+  const calculateScore = useCallback(() => {
+    let score = 0;
+    mcqs.forEach((mcq, idx) => {
+      const selected = selectedAnswers[idx];
+      if (selected !== undefined && mcq.options[selected]?.isCorrect) {
+        score++;
+      }
+    });
+    return score;
+  }, [mcqs, selectedAnswers]);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -70,43 +73,9 @@ function ModuleQuiz() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [moduleId, quizIndex, userID]);
 
-  // Timer countdown
-  useEffect(() => {
-    if (loading || isSubmitted || error || mcqs.length === 0) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [loading, isSubmitted, error, mcqs]);
-
-  const handleOptionClick = (qIndex: number, oIndex: number) => {
-    if (isSubmitted) return;
-    setSelectedAnswers((prev) => ({ ...prev, [qIndex]: oIndex }));
-  };
-
-  const calculateScore = () => {
-    let score = 0;
-    mcqs.forEach((mcq, idx) => {
-      const selected = selectedAnswers[idx];
-      if (selected !== undefined && mcq.options[selected]?.isCorrect) {
-        score++;
-      }
-    });
-    return score;
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (isSubmitted) return;
     setIsSubmitted(true);
     setIsGeneratingReport(true);
@@ -162,6 +131,37 @@ function ModuleQuiz() {
     } finally {
       setIsGeneratingReport(false);
     }
+  }, [isSubmitted, calculateScore, mcqs, selectedAnswers, timeLeft, moduleId, quizIndex, userID, quizTitle, topic]);
+
+  useEffect(() => {
+    if (!userID || !userEmail) {
+      navigate('/');
+      return;
+    }
+    fetchQuestions();
+  }, [userID, userEmail, navigate, fetchQuestions]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (loading || isSubmitted || error || mcqs.length === 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [loading, isSubmitted, error, mcqs, handleSubmit]);
+
+  const handleOptionClick = (qIndex: number, oIndex: number) => {
+    if (isSubmitted) return;
+    setSelectedAnswers((prev) => ({ ...prev, [qIndex]: oIndex }));
   };
 
   if (loading) {

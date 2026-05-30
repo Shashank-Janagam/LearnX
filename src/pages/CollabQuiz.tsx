@@ -13,7 +13,6 @@ function CollabQuiz() {
   const socketRef = useRef(null);
 
   const userID = state?.userID || sessionStorage.getItem('userID');
-  const userName = sessionStorage.getItem('userName');
 
   const [phase, setPhase] = useState('waiting'); // waiting | quiz | leaderboard
   const [participants, setParticipants] = useState([]);
@@ -103,6 +102,16 @@ function CollabQuiz() {
     };
   }, [roomCode, userID, navigate]);
 
+  const handleSubmit = useCallback(() => {
+    if (submitted) return;
+    setSubmitted(true);
+    socketRef.current?.emit('room:submit', {
+      roomCode,
+      answers: selectedAnswers,
+      userID
+    });
+  }, [submitted, roomCode, selectedAnswers, userID]);
+
   // Timer
   useEffect(() => {
     if (phase !== 'quiz' || timeLeft <= 0) return;
@@ -117,7 +126,7 @@ function CollabQuiz() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [phase, timeLeft, submitted]);
+  }, [phase, timeLeft, submitted, handleSubmit]);
 
   const handleStart = () => {
     setLoading(true);
@@ -128,16 +137,6 @@ function CollabQuiz() {
     if (submitted) return;
     setSelectedAnswers(prev => ({ ...prev, [qIndex]: oIndex }));
   };
-
-  const handleSubmit = useCallback(() => {
-    if (submitted) return;
-    setSubmitted(true);
-    socketRef.current?.emit('room:submit', {
-      roomCode,
-      answers: selectedAnswers,
-      userID
-    });
-  }, [submitted, roomCode, selectedAnswers, userID]);
 
   const copyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
