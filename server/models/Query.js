@@ -7,7 +7,8 @@ const querySchema=new mongoose.Schema({
         required: true,
     },
     userID:{
-        type:String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true,
     },
     createdAt: {

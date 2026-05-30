@@ -1,12 +1,12 @@
 import React, { useState, useEffect,useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Quiz.css';
+import '../styles/Quiz.css';
 import './Home.tsx';
-import { Divide } from 'lucide-react';
-import { set } from 'mongoose';
 import { Search, User, Sparkles } from 'lucide-react';
 import ReactMarkdown from "react-markdown";
+
+const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
 interface MCQOption {
   text: string;
@@ -30,6 +30,7 @@ function Quiz() {
   const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({});
   const [showResults, setShowResults] = useState<{ [key: number]: boolean }>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [error, setError] = useState<string>('');
 const [timeLeft, setTimeLeft] = useState<number>(0);
 const [time,setTime]=useState<number>(0);
@@ -52,7 +53,7 @@ const [res, setRes] = useState(null); // holds the user MCQ result
     if (!storedEmail){
       navigate('/');
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -68,7 +69,7 @@ const [res, setRes] = useState(null); // holds the user MCQ result
     const fetchProfile = async () => {
       try {
         const response = await axios.get(
-          `https://learnx-ed1w.onrender.com/api/profile/email/${encodeURIComponent(email)}`
+          `${HOST_SERVER}/api/profile/email/${encodeURIComponent(email)}`
         );
         setProfileData(response.data);
         if (response.data.education) {
@@ -94,12 +95,8 @@ useEffect(() => {
     setTime(timeLeft);
     setLoading(true);
     try {
-      const [res, res1] = await Promise.all([
-        axios.post('https://learnx-ed1w.onrender.com/quiz/generate', { topic, count ,profileData, difficulty }),
-        axios.post('https://learnx-ed1w.onrender.com/api/queries', { topic, userID, email })
-      ]);
+      const res = await axios.post(`${HOST_SERVER}/quiz/generate`, { topic, count ,profileData, difficulty });
       setMcqs(res.data.mcqs);
-      setQueries([res1.data, ...queries]);
 
     } catch (err) {
       console.error('❌ Error fetching MCQs:', err);
@@ -130,6 +127,7 @@ useEffect(() => {
     }, 1000);
     return () => clearInterval(timer);
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [showConfig, timeLeft, mcqs, showResults]);
 
    useEffect(() => {
@@ -142,18 +140,7 @@ useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-const saveQuizResult = async (email, topic, score) => {
-  try {
-    const response = await axios.post('https://learnx-ed1w.onrender.com/api/profile/quiz', {
-      email,
-      topic,
-      score
-    });
-    console.log('Quiz saved:', response.data);
-  } catch (error) {
-    console.error('Error saving quiz:', error);
-  }
-};
+
 
   const generateSampleMCQs = (topicName: string): MCQ[] => [
     {
@@ -230,7 +217,7 @@ const calculateScore = () => {
     setIsSubmitted(true);
 
 
-   const result =await axios.post('https://learnx-ed1w.onrender.com/quiz/report', {
+   const result =await axios.post(`${HOST_SERVER}/quiz/report`, {
       topic,
       score,
       total: mcqs.length,
@@ -244,22 +231,23 @@ setReport(generatedReport);
 
 
   try {
-    await axios.post('https://learnx-ed1w.onrender.com/quiz/save-result', {
-      userID,
-      email,
-      topic,
-      score,
-      total: mcqs.length,
-      responses,
-      report:generatedReport,
-    });
+    const [resResult, resQuery] = await Promise.all([
+      axios.post(`${HOST_SERVER}/quiz/save-result`, {
+        userID,
+        email,
+        topic,
+        score,
+        total: mcqs.length,
+        responses,
+        report: generatedReport,
+      }),
+      axios.post(`${HOST_SERVER}/api/queries`, { topic, userID, email })
+    ]);
 
-    saveQuizResult(sessionStorage.getItem("userEmail"), topic, Math.floor((score / mcqs.length) * 100));
-
- 
-    console.log('✅ Quiz result saved');
+    setQueries((prev) => [resQuery.data, ...prev]);
+    console.log('✅ Quiz result and history topic saved');
   } catch (err) {
-    console.error('❌ Failed to save quiz result:', err);
+    console.error('❌ Failed to save quiz result or history topic:', err);
   }
 
 
@@ -503,69 +491,116 @@ setReport(generatedReport);
 
 
 
-            <div className="questions-grid">
-              {mcqs.map((mcq, qIndex) => (
-                <div key={qIndex} className="question-card">
-                  <div className="question-header">
-                    <span className="question-number">Question {qIndex + 1}</span>
-                    {showResults[qIndex] && (
-                      <span className={`result-badge ${
-                        mcq.options[selectedAnswers[qIndex]]?.isCorrect
-                          ? 'correct'
-                          : 'incorrect'
-                      }`}>
-                        {mcq.options[selectedAnswers[qIndex]]?.isCorrect ? 'Correct!' : 'Incorrect'}
-                      </span>
-                    )}
-                  </div>
+            {/* Question Navigation Keys */}
+            <div className="quiz-navigation-keys">
+              {mcqs.map((_, idx) => {
+                const isCurrent = idx === currentQuestionIndex;
+                const isAnswered = selectedAnswers[idx] !== undefined;
+                const isCorrect = showResults[idx] && mcqs[idx].options[selectedAnswers[idx]]?.isCorrect;
+                const isIncorrect = showResults[idx] && !mcqs[idx].options[selectedAnswers[idx]]?.isCorrect;
+                
+                let btnClass = 'nav-key';
+                if (isCurrent) btnClass += ' active';
+                if (isAnswered) btnClass += ' answered';
+                if (showResults[idx]) {
+                  if (isCorrect) btnClass += ' correct';
+                  if (isIncorrect) btnClass += ' incorrect';
+                }
 
-                  <h4 className="question-text">{mcq.question}</h4>
-
-                  <div className="options-list">
-                    {mcq.options.map((option, oIndex) => (
-                      <button
-                        key={oIndex}
-                        onClick={() => handleOptionClick(qIndex, oIndex)}
-                        disabled={!!showResults[qIndex]}
-                        className={`option-button ${
-                          selectedAnswers[qIndex] === oIndex ? 'selected' : ''
-                        } ${
-                          showResults[qIndex]
-                            ? option.isCorrect
-                              ? 'correct'
-                              : selectedAnswers[qIndex] === oIndex
-                              ? 'incorrect'
-                              : ''
-                            : ''
-                        }`}
-                      >
-                        <span className="option-letter">{String.fromCharCode(65 + oIndex)}</span>
-                        <span className="option-text">{option.text}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {showResults[qIndex] && mcq.explanation && (
-                    <div className="explanation-section">
-                      <h5 className="explanation-title">Explanation:</h5>
-                      <p className="explanation-text">{mcq.explanation}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={btnClass}
+                    onClick={() => setCurrentQuestionIndex(idx)}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
             </div>
 
-            {!Object.keys(showResults).length && (
-              <div className="submit-all-container">
-                <button
-                  onClick={handleSubmitAll}
-                  // disabled={Object.keys(selectedAnswers).length !== mcqs.length}
-                  className="submit-button"
-                >
-                  Submit All Answers
-                </button>
+            {/* Current Question Card */}
+            {mcqs[currentQuestionIndex] && (
+              <div className="question-card active-question">
+                <div className="question-header">
+                  <span className="question-number">Question {currentQuestionIndex + 1} of {mcqs.length}</span>
+                  {showResults[currentQuestionIndex] && (
+                    <span className={`result-badge ${
+                      mcqs[currentQuestionIndex].options[selectedAnswers[currentQuestionIndex]]?.isCorrect
+                        ? 'correct'
+                        : 'incorrect'
+                    }`}>
+                      {mcqs[currentQuestionIndex].options[selectedAnswers[currentQuestionIndex]]?.isCorrect ? 'Correct!' : 'Incorrect'}
+                    </span>
+                  )}
+                </div>
+
+                <h4 className="question-text">{mcqs[currentQuestionIndex].question}</h4>
+
+                <div className="options-list">
+                  {mcqs[currentQuestionIndex].options.map((option, oIndex) => (
+                    <button
+                      key={oIndex}
+                      onClick={() => handleOptionClick(currentQuestionIndex, oIndex)}
+                      disabled={!!showResults[currentQuestionIndex]}
+                      className={`option-button ${
+                        selectedAnswers[currentQuestionIndex] === oIndex ? 'selected' : ''
+                      } ${
+                        showResults[currentQuestionIndex]
+                          ? option.isCorrect
+                            ? 'correct'
+                            : selectedAnswers[currentQuestionIndex] === oIndex
+                            ? 'incorrect'
+                            : ''
+                          : ''
+                      }`}
+                    >
+                      <span className="option-letter">{String.fromCharCode(65 + oIndex)}</span>
+                      <span className="option-text">{option.text}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {showResults[currentQuestionIndex] && mcqs[currentQuestionIndex].explanation && (
+                  <div className="explanation-section">
+                    <h5 className="explanation-title">Explanation:</h5>
+                    <p className="explanation-text">{mcqs[currentQuestionIndex].explanation}</p>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Prev/Next and Submit Controls */}
+            <div className="quiz-controls">
+              <button
+                type="button"
+                className="control-btn prev-btn"
+                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentQuestionIndex === 0}
+              >
+                Previous
+              </button>
+
+              {currentQuestionIndex < mcqs.length - 1 ? (
+                <button
+                  type="button"
+                  className="control-btn next-btn"
+                  onClick={() => setCurrentQuestionIndex(prev => Math.min(mcqs.length - 1, prev + 1))}
+                >
+                  Next
+                </button>
+              ) : (
+                !Object.keys(showResults).length && (
+                  <button
+                    onClick={handleSubmitAll}
+                    className="submit-button"
+                  >
+                    Submit Quiz
+                  </button>
+                )
+              )}
+            </div>
           </div>
         )}
 
@@ -602,7 +637,7 @@ const DoubtChat = ({ quizData, isChatOpen, setIsChatOpen }) => {
     setChat('');
     console.log(quizData, "from frontend");
     try {
-      const res = await fetch('https://learnx-ed1w.onrender.com/quiz/gemini-doubt-chat', {
+      const res = await fetch(`${HOST_SERVER}/quiz/grok-doubt-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: updatedMessages, userMcqs: quizData }), // ✅ Use updatedMessages, not old messages
@@ -645,17 +680,7 @@ useEffect(() => {
 
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-  useEffect(() => {
-      const handleMouseMove = (e: MouseEvent) => {
-        if (e.clientX <= 10) {
-          setIsChatOpen(true);
-        }
-      };
-
-      window.addEventListener('mousemove', handleMouseMove);
-      return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
+    }, [setIsChatOpen]);
 const messagesRef = useRef(null);
 const endRef = useRef(null);
 
@@ -692,21 +717,21 @@ useEffect(() => {
 
 
     </div>
-              <form className="search-form" onSubmit={handleDoubt} >
-                <div className="search-wrapper">
+              <form className="doubt-chat-form" onSubmit={handleDoubt} >
+                <div className="doubt-chat-wrapper">
                   <input
                     type="text"
                     value={chat}
                     onChange={(e) => setChat(e.target.value)}
                     placeholder="Ask a Doubt or Explore a Topic"
-                    className="search-input"
+                    className="doubt-chat-input"
                   />
                   <button
                     type="submit"
-                    className="search-submit"
+                    className="doubt-chat-submit"
                     disabled={!chat.trim()}
                   >
-                    <Search className="search-icon" />
+                    <Search className="doubt-chat-search-icon" />
                   </button>
                 </div>
               </form>

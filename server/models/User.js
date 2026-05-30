@@ -9,6 +9,14 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  username: {
+    type: String,
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    trim: true,
+    match: /^[a-z0-9_]{3,20}$/
+  },
   password: {
     type: String,
     required: true
@@ -47,22 +55,30 @@ const userSchema = new mongoose.Schema({
       date: String
     }
   ],
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }],
+  modules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LearningModule' }],
   createdAt: {
     type: Date,
     default: Date.now
   },
   education: {
-  degree: { type: String, default: '' },
-  course: { type: String, default: '' },
-  institution: { type: String, default: '' },
-  role:{type:String,default:'Not Mentioned'}
-}
-
+    degree: { type: String, default: '' },
+    course: { type: String, default: '' },
+    institution: { type: String, default: '' },
+    role: { type: String, default: 'Not Mentioned' }
+  }
 });
+
+// Text index for user search
+userSchema.index({ name: 'text', username: 'text' });
+
 userSchema.index(
   { createdAt: 1 },
   { expireAfterSeconds: 3600, partialFilterExpression: { isVerified: false } }
 );
+
 // Export the model and explicitly map to 'Users' collection
 const User = mongoose.models.User || mongoose.model('User', userSchema, 'Users');
 export default User;

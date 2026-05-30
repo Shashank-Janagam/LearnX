@@ -1,0 +1,496 @@
+.group-detail-container {
+  min-height: 100vh;
+  background: var(--gradient-bg);
+  color: var(--text-primary);
+  font-family: 'Outfit', 'Inter', 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.group-detail-header {
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--bg-card-hover);
+  backdrop-filter: blur(10px);
+  background: var(--header-bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.group-detail-header .header-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.group-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.group-header-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: var(--accent-glow);
+}
+
+.group-header-text h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.group-header-text span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.group-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-code-badge {
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-family: 'Courier New', monospace;
+  color: #c084fc;
+  font-weight: 600;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.group-code-badge:hover {
+  background: var(--accent-glow);
+  border-color: var(--border-hover);
+}
+
+.group-code-badge.copied {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.group-leave-btn {
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-leave-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ─── Tabs ───────────────────────────────────────────────── */
+.group-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--bg-card-hover);
+  background: var(--bg-primary);
+  padding: 0 2rem;
+}
+
+.group-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  font-family: inherit;
+}
+
+.group-tab:hover {
+  color: var(--text-secondary);
+}
+
+.group-tab.active {
+  color: #c084fc;
+}
+
+.group-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6C5CE7, #c084fc);
+  border-radius: 2px 2px 0 0;
+}
+
+.group-tab-badge {
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: var(--accent-glow);
+  color: #c084fc;
+}
+
+/* ─── Tab Content ────────────────────────────────────────── */
+.group-tab-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Rooms Tab ──────────────────────────────────────────── */
+.rooms-tab-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.rooms-post-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 2px dashed rgba(108, 92, 231, 0.3);
+  background: var(--accent-glow);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.rooms-post-btn:hover {
+  border-color: rgba(108, 92, 231, 0.5);
+  background: rgba(108, 92, 231, 0.1);
+  color: #c084fc;
+}
+
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.room-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.room-item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-glow);
+}
+
+.room-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.room-item-topic {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.room-item-status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.room-item-status.waiting {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.room-item-status.active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.room-item-status.completed {
+  background: rgba(156, 163, 175, 0.1);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.room-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.room-item-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.room-join-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6C5CE7, #6366f1);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.room-join-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+}
+
+.room-join-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Members Tab ────────────────────────────────────────── */
+.members-tab-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.members-invite-section {
+  background: rgba(108, 92, 231, 0.06);
+  border: 1px solid var(--accent-glow);
+  border-radius: 14px;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.members-invite-section p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 0.8rem;
+}
+
+.invite-code {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  font-family: 'Courier New', monospace;
+  color: #c084fc;
+  margin-bottom: 0.6rem;
+}
+
+.invite-copy-btn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  background: var(--accent-glow);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  color: #c084fc;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.invite-copy-btn:hover {
+  background: rgba(108, 92, 231, 0.25);
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-hover);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.member-item:hover {
+  background: var(--bg-card);
+}
+
+.member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--accent-glow);
+  color: #c084fc;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.member-username {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.member-role-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.member-role-badge.admin {
+  background: var(--accent-glow);
+  color: #c084fc;
+  border: 1px solid rgba(108, 92, 231, 0.25);
+}
+
+.member-role-badge.creator {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.member-remove-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.member-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ─── Post Room Modal ────────────────────────────────────── */
+.post-room-config {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+/* ─── Loading & Empty ────────────────────────────────────── */
+.tab-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.tab-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.tab-empty h3 {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.tab-empty p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .group-detail-header {
+    padding: 0.75rem 1rem;
+  }
+  .group-tabs {
+    padding: 0 1rem;
+  }
+  .group-tab {
+    padding: 12px 14px;
+    font-size: 0.82rem;
+  }
+  .rooms-tab-content,
+  .members-tab-content {
+    padding: 1rem;
+  }
+  .group-header-actions {
+    gap: 4px;
+  }
+  .group-code-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+  .post-room-config {
+    grid-template-columns: 1fr;
+  }
+}

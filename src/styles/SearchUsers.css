@@ -1,0 +1,233 @@
+.search-users-container {
+  min-height: 100vh;
+  background: var(--gradient-bg);
+  color: var(--text-primary);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.search-header {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--bg-card-hover);
+  backdrop-filter: blur(10px);
+  background: var(--header-bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.search-header .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.search-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.search-hero-icon {
+  color: #8b5cf6;
+  margin-bottom: 0.5rem;
+}
+
+.search-hero h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #c084fc, #818cf8, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.25rem;
+}
+
+.search-hero p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.search-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.search-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.search-tab:hover {
+  background: rgba(139,92,246,0.1);
+}
+
+.search-tab.active {
+  background: rgba(139,92,246,0.15);
+  border-color: rgba(139,92,246,0.4);
+  color: #c084fc;
+}
+
+.tab-count {
+  background: rgba(139,92,246,0.3);
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.search-bar-section {
+  margin-bottom: 1.5rem;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: rgba(139,92,246,0.5);
+  box-shadow: 0 0 15px rgba(139,92,246,0.1);
+}
+
+.search-input-icon {
+  color: #666699;
+  flex-shrink: 0;
+}
+
+.search-input-field {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.search-input-field::placeholder {
+  color: #555580;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.user-card:hover {
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.2);
+}
+
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.user-username {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.follow-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.1);
+  color: #c084fc;
+}
+
+.follow-btn:hover {
+  background: rgba(139,92,246,0.2);
+}
+
+.follow-btn.following {
+  background: var(--bg-card);
+  border-color: var(--border-hover);
+  color: var(--text-muted);
+}
+
+.follow-btn.following:hover {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.3);
+  color: #fca5a5;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666699;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .search-tabs {
+    gap: 0.3rem;
+  }
+  .search-tab {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+}

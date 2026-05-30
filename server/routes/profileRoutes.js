@@ -1,5 +1,5 @@
 import express from 'express';
-import User from '../models/Profile.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ router.get('/email/:email', async (req, res) => {
       console.log('User not found in DB');
       return res.status(404).json({ error: 'User not found' });
     }
-    console.log('User found:', user);
+    // console.log('User found:', user);
     res.json(user);
   } catch (error) {
     console.error(error);
@@ -20,42 +20,38 @@ router.get('/email/:email', async (req, res) => {
   }
 });
 
-router.post('/quiz', async (req, res) => {
-  const { email, topic, score } = req.body;
+// PUT: Update username
+router.put('/update-username', async (req, res) => {
+  const { email, username } = req.body;
+
+  if (!username || !/^[a-z0-9_]{3,20}$/.test(username.toLowerCase())) {
+    return res.status(400).json({
+      error: 'Username must be 3-20 characters, lowercase alphanumeric and underscores only'
+    });
+  }
 
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    const newQuiz = {
-      topic,
-      score,
-      date: new Date().toLocaleDateString('en-IN')
-    };
-
-    // Add to recentQuizzes
-    user.recentQuizzes.push(newQuiz);
-
-    // Keep only the last 3
-    if (user.recentQuizzes.length > 3) {
-      user.recentQuizzes = user.recentQuizzes.slice(-3);
+    // Check if username is taken
+    const existing = await User.findOne({ username: username.toLowerCase() });
+    if (existing && existing.email !== email) {
+      return res.status(409).json({ error: 'Username already taken' });
     }
 
-    // Update stats
-    user.stats.totalQuizzes = (user.stats.totalQuizzes || 0) + 1;
-    user.stats.averageScore =
-      Math.round(
-        user.recentQuizzes.reduce((sum, q) => sum + q.score, 0) / user.recentQuizzes.length
-      );
-    user.stats.recentTopic = topic;
+    const user = await User.findOneAndUpdate(
+      { email },
+      { username: username.toLowerCase() },
+      { new: true }
+    );
 
-    await user.save();
-    res.status(200).json({ message: 'Quiz saved', recentQuizzes: user.recentQuizzes });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error while saving quiz' });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json({ message: 'Username updated', username: user.username });
+  } catch (err) {
+    console.error('Username update error:', err);
+    res.status(500).json({ error: 'Failed to update username' });
   }
 });
+
 // PUT: Change password
 router.put('/update-password', async (req, res) => {
   const { email, newPassword } = req.body;
@@ -83,7 +79,7 @@ router.put('/update-education', async (req, res) => {
       { email },
       {
         $set: {
-          education // ✅ sets entire education object (including role)
+          education // sets entire education object (including role)
         }
       },
       { new: true }

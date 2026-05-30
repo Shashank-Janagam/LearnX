@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './ResetPassword.css';
+import '../styles/ResetPassword.css';
+const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
 const ResetPassword = () => {
   const [token, setToken] = useState('');
@@ -36,7 +37,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await fetch('https://learnx-ed1w.onrender.com/auth/reset-password', {
+      const res = await fetch(`${HOST_SERVER}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword }),

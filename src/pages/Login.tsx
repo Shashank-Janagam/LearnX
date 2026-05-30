@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
+import '../styles/Login.css';
 import emailjs from '@emailjs/browser';
+const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
+const CLIENT_URL = process.env.REACT_APP_CLIENT_URL || window.location.origin;
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -34,9 +36,11 @@ const Login = () => {
       const emaill=localStorage.getItem('userEmail');
       sessionStorage.setItem('userEmail',emaill);
       const namee=localStorage.getItem('userName');
-      sessionStorage.setItem('userName',namee);
-
-
+      sessionStorage.setItem('userName', namee);
+      const usernamee = localStorage.getItem('username');
+      if (usernamee) {
+        sessionStorage.setItem('username', usernamee);
+      }
       navigate('/home');
     }
   }, [navigate]);
@@ -60,7 +64,7 @@ const sendPasswordResetEmail = async () => {
   }
   setIsLoading(true);
   try {
-    const res = await fetch('https://learnx-ed1w.onrender.com/auth/request-reset', {
+    const res = await fetch(`${HOST_SERVER}/auth/request-reset`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -69,7 +73,7 @@ const sendPasswordResetEmail = async () => {
     const data = await res.json();
     const token = data.token;
 
-    const resetLink = `https://getlearnxai.vercel.app/reset-password?token=${token}`;
+    const resetLink = `${CLIENT_URL}/reset-password?token=${token}`;
 
     const templateParams = {
       user_email: email,
@@ -123,7 +127,7 @@ const sendPasswordResetEmail = async () => {
     }
 
     try {
-      const res = await fetch('https://learnx-ed1w.onrender.com/auth/login', {
+      const res = await fetch(`${HOST_SERVER}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -137,18 +141,24 @@ const sendPasswordResetEmail = async () => {
           setIsLoading(false);
         }, 500);
       } else {
-        const { _id, name, email } = data.user;
+        const { _id, name, email, username } = data.user;
 
         // Always use sessionStorage
         sessionStorage.setItem('userID', _id);
         sessionStorage.setItem('userName', name);
         sessionStorage.setItem('userEmail', email);
+        if (username) {
+          sessionStorage.setItem('username', username);
+        }
 
         // Optional: remember me
         if (rememberMe) {
           localStorage.setItem('userID', _id);
           localStorage.setItem('userName', name);
           localStorage.setItem('userEmail', email);
+          if (username) {
+            localStorage.setItem('username', username);
+          }
         }
 
 
@@ -158,7 +168,7 @@ const sendPasswordResetEmail = async () => {
 
     } catch (err) {
       console.error('Frontend error:', err);
-      setError(error);
+      setError(err instanceof Error ? err.message : 'An error occurred during login. Please try again.');
     }
   };
 

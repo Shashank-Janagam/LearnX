@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Moon, Sun, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
-import jwt from 'jsonwebtoken';
+import '../styles/Login.css';
 import emailjs from '@emailjs/browser';
+const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
+const CLIENT_URL = process.env.REACT_APP_CLIENT_URL || window.location.origin;
 
 const Sign = () => {
   const [name, setName] = useState('');
@@ -38,7 +39,7 @@ const [verificationMessage, setVerificationMessage] = useState('');
   }, []);
   
  const sendVerificationEmail = (email: string, token: string) => {
-    const verificationLink = `https://getlearnxai.vercel.app/verify-email?token=${token}`;
+    const verificationLink = `${CLIENT_URL}/verify-email?token=${token}`;
 
     const templateParams = {
       user_email: email,
@@ -93,7 +94,7 @@ const handleRegister = async (e: React.FormEvent) => {
   }
 
   try {
-    const res = await fetch('https://learnx-ed1w.onrender.com/auth/register', {
+    const res = await fetch(`${HOST_SERVER}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name }),

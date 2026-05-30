@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 
 const quizResultSchema = new mongoose.Schema({
-  userID: { type: String, required: true },
+  userID: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   email: { type: String, required: true },
   topic: { type: String, required: true },
   score: { type: Number, required: true },

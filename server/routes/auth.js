@@ -10,7 +10,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const user = await User.findOne({ email: email.toLowerCase() });
-    console.log('User found:', user);
+    // console.log('User found:', user);
 
     if (!user || user.password !== password) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -26,6 +26,7 @@ router.post('/login', async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        username: user.username || null,
       },
     });
   } catch (err) {
@@ -46,17 +47,18 @@ router.post('/register', async (req, res) => {
     const newUser = new User({ name, email: email.toLowerCase(), password, isVerified: false });
     await newUser.save();
 
-    // ✅ Create verification token here
+    // Create verification token here
     const token = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // ✅ Send token to frontend
+    // Send token to frontend
     return res.status(201).json({
       message: 'User registered successfully',
       token,
       user: {
         _id: newUser._id,
         name: newUser.name,
-        email: newUser.email
+        email: newUser.email,
+        username: newUser.username || null,
       }
     });
 
@@ -83,7 +85,7 @@ router.get('/verify-email', async (req, res) => {
 router.post('/request-reset', async (req, res) => {
   const { email } = req.body;
 
-  // Check if user exists in DB (replace with real DB call)
+  // Check if user exists in DB
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -93,7 +95,6 @@ router.post('/request-reset', async (req, res) => {
   // Send token to frontend
   res.json({ token });
 });
-// routes/reset.js
 
 
 router.post('/reset-password', async (req, res) => {
@@ -105,10 +106,10 @@ router.post('/reset-password', async (req, res) => {
     const user = await User.findOne({ email: decoded.email });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.password = newPassword; // ❌ Plain text — not safe for production
+    user.password = newPassword; // Plain text — not safe for production
     await user.save();
 
-    res.json({ message: '✅ Password updated without hashing' });
+    res.json({ message: '✅ Password updated' });
   } catch (err) {
     console.error('Token verification failed:', err);
     res.status(400).json({ message: 'Invalid or expired token' });

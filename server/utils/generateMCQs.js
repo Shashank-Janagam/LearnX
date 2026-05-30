@@ -153,11 +153,47 @@
   // }
 // utils/generateMCQs.js// server/utils/generateMCQs.js
 // server/utils/generateMCQs.js
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+async function callGrok(messages) {
+  const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROK_API_KEY is not defined in the environment variables.");
+  }
+  
+  let endpoint = 'https://api.x.ai/v1/chat/completions';
+  let model = 'grok-2-latest';
+  
+  if (apiKey.startsWith('gsk_')) {
+    endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+    model = 'llama-3.3-70b-versatile';
+    console.log('⚡ Groq API key detected. Routing to Groq using model: llama-3.3-70b-versatile');
+  } else {
+    console.log('⚡ xAI API key detected. Routing to xAI using model: grok-2-latest');
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      messages: messages,
+      model: model,
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(`AI API error (${response.status}): ${errorData}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
 
 export async function generateMCQs(topic, count, profileData,difficulty = 'easy') {
   const { name, education, stats, recentQuizzes } = profileData;
@@ -213,9 +249,7 @@ Output the MCQs in this exact JSON format:
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash'}); // ✅ correct
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await callGrok([{ role: 'user', content: prompt }]);
 
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
@@ -231,7 +265,7 @@ Output the MCQs in this exact JSON format:
 
     return JSON.parse(jsonString);
   } catch (error) {
-    console.error('❌ Error generating MCQs from Gemini:', error.message);
+    console.error('❌ Error generating MCQs from Grok:', error.message);
     return [];
   }
 }
@@ -276,11 +310,9 @@ Do not repeat the instructions or raw data.
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' }); // ✅ correct
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    return await callGrok([{ role: 'user', content: prompt }]);
   } catch (error) {
-    console.error('❌ Error generating report from Gemini:', error.message);
+    console.error('❌ Error generating report from Grok:', error.message);
     return '⚠️ Failed to generate personalized report.';
   }
 }
@@ -405,9 +437,7 @@ ${conv}
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    return await callGrok([{ role: 'user', content: prompt }]);
   } catch (error) {
     console.error('❌ Error generating doubt chat response:', error.message);
     return '⚠️ Sorry, I could not process your question right now.';

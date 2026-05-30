@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './QuizHistoryView.css';
+import '../styles/QuizHistoryView.css';
+const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
 interface QuizResponse {
   question: string;
@@ -46,7 +47,7 @@ function QuizHistoryView() {
     const fetchQuizResult = async () => {
       try {
         const res = await axios.get(
-          `https://learnx-ed1w.onrender.com/history/${userID}/${topic}`
+          `${HOST_SERVER}/history/${userID}/${topic}`
         );
         setResult(res.data.result);
         console.log('Fetched result:', res.data.result);
