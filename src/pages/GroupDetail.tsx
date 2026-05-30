@@ -765,7 +765,6 @@ function GroupDetail() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {resultsData.questions.map((q: any, qi: number) => {
-                          const correctOption = q.options?.find((o: any) => o.isCorrect);
                           const letters = ['A', 'B', 'C', 'D'];
                           return (
                             <div key={qi} style={{ background: 'var(--bg-tertiary, #21262d)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)' }}>

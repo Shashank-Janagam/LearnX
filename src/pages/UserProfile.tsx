@@ -3,7 +3,7 @@ import '../styles/UserProfile.css';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  User, Mail, Award, BarChart3, Clock, ArrowLeft,
+  User, Award, BarChart3, Clock, ArrowLeft,
   BookOpen, Trophy, Target, UserPlus, UserMinus, AtSign, Hash
 } from 'lucide-react';
 
