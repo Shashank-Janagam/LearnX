@@ -1,7 +1,14 @@
 import express from 'express';
 import User from '../models/User.js';
+import crypto from 'crypto';
 
 const router = express.Router();
+
+// Generates a stable 6-char display ID from email
+function computeDisplayId(email) {
+  const hash = crypto.createHash('sha256').update((email || '').toLowerCase()).digest('hex');
+  return '#LX-' + hash.slice(0, 6).toUpperCase();
+}
 
 // GET user profile by email
 router.get('/email/:email', async (req, res) => {
@@ -12,8 +19,35 @@ router.get('/email/:email', async (req, res) => {
       console.log('User not found in DB');
       return res.status(404).json({ error: 'User not found' });
     }
-    // console.log('User found:', user);
-    res.json(user);
+    const userData = user.toObject();
+    userData.displayId = computeDisplayId(user.email);
+    res.json(userData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET public user profile by userId
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('name username email education stats recentQuizzes followers following createdAt');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      _id: user._id,
+      name: user.name,
+      username: user.username || null,
+      displayId: computeDisplayId(user.email),
+      education: user.education,
+      stats: user.stats,
+      recentQuizzes: user.recentQuizzes || [],
+      followerCount: user.followers?.length || 0,
+      followingCount: user.following?.length || 0,
+      followers: user.followers || [],
+      following: user.following || [],
+      createdAt: user.createdAt
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

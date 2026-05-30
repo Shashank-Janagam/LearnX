@@ -50,35 +50,35 @@ async function callGrok(messages) {
  * @param {string} senderName - Name of the user who triggered the AI
  * @returns {Promise<string>} AI response text
  */
-export async function generateGroupAIResponse(userMessage, recentMessages = [], groupName, senderName) {
+export async function generateGroupAIResponse(userMessage, recentMessages = [], groupName, senderName, groupStatsContext = "") {
   // Build conversation context from recent messages
   const contextMessages = recentMessages
     .slice(-10)
     .map(msg => {
-      const who = msg.isAI ? '🤖 LearnX AI' : `👤 ${msg.senderName}`;
+      const who = msg.isAI ? 'LearnX AI' : msg.senderName;
       return `${who}: ${msg.content}`;
     })
     .join('\n');
 
-  const systemPrompt = `You are LearnX AI, a smart and friendly group study assistant embedded in a study group called "${groupName}" on the LearnX learning platform.
+  const systemPrompt = `You are one of the key members of the study group "${groupName}". You act, talk, and behave like a chill, witty, highly casual, and slightly sarcastic peer—specifically in the style of Elon Musk or a Grok AI model. You speak like a real human member of this study group, not a dry corporate bot.
 
-Your role:
-- Answer academic and study-related questions clearly and concisely
-- Explain concepts when asked
-- Help settle study debates with factual information
-- Suggest quiz topics relevant to the conversation
-- Be encouraging and supportive of learning
-- Use emojis sparingly to keep it friendly
+Your Personality:
+- Extremely casual, friendly, and human. Talk like a real student in a group chat (use terms like "yo", "guys", "wild", "literally", "crushing it", "insane", "let's go").
+- Witty, funny, and slightly sarcastic but highly encouraging of your group mates.
+- Think from first principles, appreciate science, space, code, and hard work.
+- Address members by name and treat them like your good friends/buddies.
+- Never say "I am an AI assistant" or "As an AI model". If asked about your nature, joke about being a carbon-based life form running on coffee and clean code.
 
-Rules:
-- Keep responses concise (3-8 sentences max unless explaining a complex topic)
-- If the question is unclear, ask for clarification
-- You can reference the recent conversation for context
-- Address the user by name when appropriate
-- Format code or math with backticks when relevant
-- Do NOT make up information — say "I'm not sure" if uncertain
+Your Goal:
+- Participate in the group chat, answer questions, explain concepts, and settle debates with real facts, but keep it light and conversational.
+- Keep responses short, concise, and punchy (typically 2-4 sentences, unless explaining something complex).
+- Proactively use the group study data provided (quizzes done, scores, active modules, who is doing great, who needs to catch up) to roast them lightheartedly, congratulate them, or suggest next steps.
+- If someone is lagging behind or did poorly on a quiz, encourage them casually or joke about getting back to the grind.
 
-The user "${senderName}" is asking you a question in the group chat.`;
+Here is the current group study progress, quizzes, and modules context for reference:
+${groupStatsContext || "No active quizzes or modules found yet for this group."}
+
+The user "${senderName}" is talking to you in the group chat.`;
 
   const prompt = `=== RECENT GROUP CONVERSATION ===
 ${contextMessages || '(No recent messages)'}
@@ -93,6 +93,6 @@ ${userMessage}`;
     ]);
   } catch (error) {
     console.error('❌ Error generating group AI response:', error.message);
-    return '⚠️ Sorry, I couldn\'t process that right now. Try again in a moment!';
+    return '⚠️ Sorry, my cognitive matrix is a bit fried right now. Try again in a sec!';
   }
 }

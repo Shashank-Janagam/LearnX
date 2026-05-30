@@ -104,18 +104,7 @@ router.get('/my-groups/:userId', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Get my groups error:', err);
-    res.status(500).json({ error: 'Failed to fetch groups' });
-  }
-});
-
-// ─── GET GROUP DETAILS ──────────────────────────────────────
-router.get('/:code', async (req, res) => {
-  try {
-    const group = await Group.findOne({ code: req.params.code.toUpperCase() });
-    if (!group) return res.status(404).json({ error: 'Group not found' });
-    res.json(group);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch group' });
+    res.status(500).json({ error: 'Failed to fetch groups', details: err.message });
   }
 });
 
@@ -263,7 +252,7 @@ router.get('/:code/members', async (req, res) => {
 
 // ─── POST QUIZ ROOM TO GROUP ────────────────────────────────
 router.post('/:code/post-room', async (req, res) => {
-  const { userID, topic, config } = req.body;
+  const { userID, topic, description, config } = req.body;
 
   try {
     const group = await Group.findOne({ code: req.params.code.toUpperCase() });
@@ -316,6 +305,7 @@ router.post('/:code/post-room', async (req, res) => {
     group.rooms.push({
       roomCode,
       topic,
+      description: description?.trim() || '',
       postedBy: userID,
       postedByName: user.name,
       status: 'waiting',
@@ -366,6 +356,7 @@ router.get('/:code/rooms', async (req, res) => {
     const rooms = group.rooms.map(r => ({
       roomCode: r.roomCode,
       topic: r.topic,
+      description: r.description || '',
       postedBy: r.postedBy,
       postedByName: r.postedByName,
       postedAt: r.postedAt,
@@ -374,13 +365,71 @@ router.get('/:code/rooms', async (req, res) => {
       participantCount: statusMap[r.roomCode]?.participantCount || 0
     }));
 
-    // Sort: waiting first, then active, then completed
+    // Sort: waiting/active first (newest-first), then completed (newest-first)
     const order = { waiting: 0, active: 1, completed: 2 };
-    rooms.sort((a, b) => (order[a.status] || 3) - (order[b.status] || 3));
+    rooms.sort((a, b) => {
+      const statusDiff = (order[a.status] ?? 3) - (order[b.status] ?? 3);
+      if (statusDiff !== 0) return statusDiff;
+      // Within same status: newest first (handle missing postedAt gracefully)
+      const dateA = a.postedAt ? new Date(a.postedAt).getTime() : 0;
+      const dateB = b.postedAt ? new Date(b.postedAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
     res.json(rooms);
   } catch (err) {
+    console.error('Get rooms error:', err);
     res.status(500).json({ error: 'Failed to fetch rooms' });
+  }
+});
+
+// ─── GET COMPLETED ROOM RESULTS (leaderboard + questions) ───
+router.get('/:code/rooms/:roomCode/results', async (req, res) => {
+  try {
+    const group = await Group.findOne({ code: req.params.code.toUpperCase() });
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const room = await Room.findOne({ roomCode: req.params.roomCode.toUpperCase() });
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    const leaderboard = room.participants
+      .slice()
+      .sort((a, b) => {
+        const scoreA = a.total > 0 ? (a.score / a.total) * 100 : 0;
+        const scoreB = b.total > 0 ? (b.score / b.total) * 100 : 0;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        if (a.completedAt && b.completedAt) return new Date(a.completedAt) - new Date(b.completedAt);
+        return 0;
+      })
+      .map((p, index) => ({
+        rank: index + 1,
+        name: p.name,
+        username: p.username,
+        userId: p.user.toString(),
+        score: p.score,
+        total: p.total,
+        percentage: p.total > 0 ? Math.round((p.score / p.total) * 100) : 0
+      }));
+
+    // Return questions with correct answers revealed
+    const questions = (room.mcqs || []).map((q, i) => ({
+      index: i + 1,
+      question: q.question,
+      options: q.options,          // includes isCorrect
+      explanation: q.explanation
+    }));
+
+    res.json({
+      topic: room.topic,
+      status: room.status,
+      completedAt: room.completedAt,
+      config: room.config,
+      leaderboard,
+      questions
+    });
+  } catch (err) {
+    console.error('Room results error:', err);
+    res.status(500).json({ error: 'Failed to fetch room results', details: err.message });
   }
 });
 
@@ -411,6 +460,17 @@ router.get('/:code/messages', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// ─── GET GROUP DETAILS — wildcard, must be LAST among GET /:code/* routes ─
+router.get('/:code', async (req, res) => {
+  try {
+    const group = await Group.findOne({ code: req.params.code.toUpperCase() });
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    res.json(group);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch group' });
   }
 });
 

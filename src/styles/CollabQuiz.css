@@ -316,10 +316,94 @@
   transition: width 0.5s ease;
 }
 
-.questions-grid {
+/* Single-question layout replaces grid */
+.active-question {
+  animation: fadeInUp 0.25s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Question nav palette */
+.quiz-navigation-keys {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.nav-key {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.nav-key:hover {
+  border-color: rgba(139,92,246,0.5);
+  color: #c084fc;
+}
+.nav-key.active {
+  background: rgba(139,92,246,0.2);
+  border-color: rgba(139,92,246,0.6);
+  color: #c084fc;
+  box-shadow: 0 0 0 2px rgba(139,92,246,0.2);
+}
+.nav-key.answered {
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.4);
+  color: #7dd3fc;
+}
+.nav-key.correct {
+  background: rgba(34,197,94,0.12);
+  border-color: rgba(34,197,94,0.5);
+  color: #86efac;
+}
+.nav-key.incorrect {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.4);
+  color: #fca5a5;
+}
+
+/* Controls row */
+.quiz-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  gap: 1rem;
+}
+
+.control-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.control-btn:hover:not(:disabled) {
+  background: rgba(139,92,246,0.08);
+  border-color: rgba(139,92,246,0.4);
+  color: #c084fc;
+}
+.control-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .question-card {

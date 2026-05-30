@@ -29,6 +29,7 @@ function CollabQuiz() {
   const [submitted, setSubmitted] = useState(false);
   const [submittedCount, setSubmittedCount] = useState(0);
   const [totalParticipants, setTotalParticipants] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // Leaderboard
   const [leaderboard, setLeaderboard] = useState([]);
@@ -76,6 +77,7 @@ function CollabQuiz() {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
       setTimeLeft(remaining);
       setPhase('quiz');
+      setCurrentQuestionIndex(0);
       setLoading(false);
     });
 
@@ -232,9 +234,11 @@ function CollabQuiz() {
     );
   }
 
-  // ===== QUIZ PHASE =====
+  // ===== QUIZ PHASE — ONE QUESTION AT A TIME =====
   if (phase === 'quiz') {
     const score = calculateScore();
+    const currentMcq = mcqs[currentQuestionIndex];
+
     return (
       <div className="collab-quiz-container">
         <header className="collab-q-header">
@@ -243,7 +247,7 @@ function CollabQuiz() {
           </div>
           <div className="quiz-header-info">
             <span className="room-badge">Room: {roomCode}</span>
-            <span className={"timer-badge" + (timeLeft < 30 ? ' urgent' : '')}>
+            <span className={'timer-badge' + (timeLeft < 30 ? ' urgent' : '')}>
               <Clock size={14} /> {formatTime(timeLeft)}
             </span>
             {submitted && <span className="submitted-badge">✓ Submitted</span>}
@@ -251,6 +255,7 @@ function CollabQuiz() {
         </header>
 
         <main className="collab-q-main quiz-phase">
+          {/* Progress bar */}
           <div className="quiz-status-bar">
             <span>{submittedCount}/{totalParticipants} submitted</span>
             <div className="progress-bar">
@@ -261,50 +266,105 @@ function CollabQuiz() {
             </div>
           </div>
 
-          <div className="questions-grid">
-            {mcqs.map((mcq, qIndex) => (
-              <div key={qIndex} className={"question-card" + (submitted ? ' revealed' : '')}>
-                <div className="question-header">
-                  <span className="question-number">Q{qIndex + 1}</span>
-                  {submitted && (
-                    <span className={"result-badge " + (mcq.options[selectedAnswers[qIndex]]?.isCorrect ? 'correct' : 'incorrect')}>
-                      {mcq.options[selectedAnswers[qIndex]]?.isCorrect ? '✓ Correct' : '✗ Wrong'}
-                    </span>
-                  )}
-                </div>
-                <h4 className="question-text">{mcq.question}</h4>
-                <div className="options-list">
-                  {mcq.options.map((opt, oIndex) => (
-                    <button
-                      key={oIndex}
-                      onClick={() => handleOptionClick(qIndex, oIndex)}
-                      disabled={submitted}
-                      className={"option-button" +
-                        (selectedAnswers[qIndex] === oIndex ? ' selected' : '') +
-                        (submitted && opt.isCorrect ? ' correct' : '') +
-                        (submitted && selectedAnswers[qIndex] === oIndex && !opt.isCorrect ? ' incorrect' : '')}
-                    >
-                      <span className="option-letter">{String.fromCharCode(65 + oIndex)}</span>
-                      <span className="option-text">{opt.text}</span>
-                    </button>
-                  ))}
-                </div>
-                {submitted && mcq.explanation && (
-                  <div className="explanation-section">
-                    <p className="explanation-text">{mcq.explanation}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+          {/* Question nav palette */}
+          <div className="quiz-navigation-keys">
+            {mcqs.map((_, idx) => {
+              const isCurrent = idx === currentQuestionIndex;
+              const isAnswered = selectedAnswers[idx] !== undefined;
+              const isCorrect = submitted && mcqs[idx].options[selectedAnswers[idx]]?.isCorrect;
+              const isIncorrect = submitted && selectedAnswers[idx] !== undefined && !mcqs[idx].options[selectedAnswers[idx]]?.isCorrect;
+
+              let btnClass = 'nav-key';
+              if (isCurrent) btnClass += ' active';
+              if (isAnswered && !submitted) btnClass += ' answered';
+              if (submitted) {
+                if (isCorrect) btnClass += ' correct';
+                else if (isIncorrect) btnClass += ' incorrect';
+              }
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  className={btnClass}
+                  onClick={() => setCurrentQuestionIndex(idx)}
+                >
+                  {idx + 1}
+                </button>
+              );
+            })}
           </div>
 
-          {!submitted && (
-            <div className="submit-container">
-              <button className="submit-btn" onClick={handleSubmit}>
-                Submit Answers ({Object.keys(selectedAnswers).length}/{mcqs.length} answered)
-              </button>
+          {/* Current Question Card */}
+          {currentMcq && (
+            <div className={`question-card active-question${submitted ? ' revealed' : ''}`}>
+              <div className="question-header">
+                <span className="question-number">
+                  Question {currentQuestionIndex + 1} of {mcqs.length}
+                </span>
+                {submitted && (
+                  <span className={`result-badge ${currentMcq.options[selectedAnswers[currentQuestionIndex]]?.isCorrect ? 'correct' : 'incorrect'}`}>
+                    {currentMcq.options[selectedAnswers[currentQuestionIndex]]?.isCorrect ? '✓ Correct' : '✗ Wrong'}
+                  </span>
+                )}
+              </div>
+
+              <h4 className="question-text">{currentMcq.question}</h4>
+
+              <div className="options-list">
+                {currentMcq.options.map((opt, oIndex) => (
+                  <button
+                    key={oIndex}
+                    onClick={() => handleOptionClick(currentQuestionIndex, oIndex)}
+                    disabled={submitted}
+                    className={
+                      'option-button' +
+                      (selectedAnswers[currentQuestionIndex] === oIndex ? ' selected' : '') +
+                      (submitted && opt.isCorrect ? ' correct' : '') +
+                      (submitted && selectedAnswers[currentQuestionIndex] === oIndex && !opt.isCorrect ? ' incorrect' : '')
+                    }
+                  >
+                    <span className="option-letter">{String.fromCharCode(65 + oIndex)}</span>
+                    <span className="option-text">{opt.text}</span>
+                  </button>
+                ))}
+              </div>
+
+              {submitted && currentMcq.explanation && (
+                <div className="explanation-section">
+                  <p className="explanation-text">{currentMcq.explanation}</p>
+                </div>
+              )}
             </div>
           )}
+
+          {/* Prev / Next / Submit Controls */}
+          <div className="quiz-controls">
+            <button
+              type="button"
+              className="control-btn prev-btn"
+              onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+              disabled={currentQuestionIndex === 0}
+            >
+              Previous
+            </button>
+
+            {currentQuestionIndex < mcqs.length - 1 ? (
+              <button
+                type="button"
+                className="control-btn next-btn"
+                onClick={() => setCurrentQuestionIndex(prev => Math.min(mcqs.length - 1, prev + 1))}
+              >
+                Next
+              </button>
+            ) : (
+              !submitted && (
+                <button className="submit-btn" onClick={handleSubmit}>
+                  Submit Answers ({Object.keys(selectedAnswers).length}/{mcqs.length} answered)
+                </button>
+              )
+            )}
+          </div>
 
           {submitted && (
             <div className="waiting-results">
@@ -339,7 +399,14 @@ function CollabQuiz() {
           <div className="podium">
             {leaderboard.length >= 2 && (
               <div className="podium-place second">
-                <div className="podium-avatar">{leaderboard[1].name.charAt(0)}</div>
+                <div
+                  className="podium-avatar"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/profile/${leaderboard[1].userId}`)}
+                  title="View profile"
+                >
+                  {leaderboard[1].name.charAt(0)}
+                </div>
                 <span className="podium-name">{leaderboard[1].name}</span>
                 <span className="podium-score">{leaderboard[1].percentage}%</span>
                 <div className="podium-bar">2nd</div>
@@ -347,14 +414,28 @@ function CollabQuiz() {
             )}
             <div className="podium-place first">
               <Crown size={24} className="podium-crown" />
-              <div className="podium-avatar gold">{leaderboard[0].name.charAt(0)}</div>
+              <div
+                className="podium-avatar gold"
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/profile/${leaderboard[0].userId}`)}
+                title="View profile"
+              >
+                {leaderboard[0].name.charAt(0)}
+              </div>
               <span className="podium-name">{leaderboard[0].name}</span>
               <span className="podium-score">{leaderboard[0].percentage}%</span>
               <div className="podium-bar">1st</div>
             </div>
             {leaderboard.length >= 3 && (
               <div className="podium-place third">
-                <div className="podium-avatar">{leaderboard[2].name.charAt(0)}</div>
+                <div
+                  className="podium-avatar"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/profile/${leaderboard[2].userId}`)}
+                  title="View profile"
+                >
+                  {leaderboard[2].name.charAt(0)}
+                </div>
                 <span className="podium-name">{leaderboard[2].name}</span>
                 <span className="podium-score">{leaderboard[2].percentage}%</span>
                 <div className="podium-bar">3rd</div>
@@ -372,11 +453,15 @@ function CollabQuiz() {
             <span>Accuracy</span>
           </div>
           {leaderboard.map((entry, i) => (
-            <div key={i} className={"lb-row" + (entry.userId === userID ? ' is-me' : '')}>
+            <div key={i} className={`lb-row${entry.userId === userID ? ' is-me' : ''}`}>
               <span className="lb-rank">
                 {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : '#' + entry.rank}
               </span>
-              <span className="lb-name">
+              <span
+                className="lb-name"
+                style={{ cursor: entry.userId !== userID ? 'pointer' : 'default' }}
+                onClick={() => entry.userId !== userID && navigate(`/profile/${entry.userId}`)}
+              >
                 {entry.name}
                 {entry.username && <small> @{entry.username}</small>}
                 {entry.userId === userID && <span className="you-tag">You</span>}

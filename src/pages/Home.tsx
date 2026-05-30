@@ -431,7 +431,7 @@ function Home() {
                     <div 
                       key={group._id} 
                       className="sidebar-group-item" 
-                      onClick={() => navigate(`/group/${group.code}`)}
+                      onClick={() => navigate(`/groups/${group.code}`)}
                     >
                       <div className="group-item-avatar" style={{ background: `${group.color || '#6C5CE7'}22` }}>
                         {group.avatar || '📚'}

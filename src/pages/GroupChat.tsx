@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/GroupChat.css';
 import { Send, Bot, MessageCircle } from 'lucide-react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
@@ -166,7 +167,9 @@ function GroupChat({ socket, groupCode, groupName, userID }) {
                   {isAI && <span className="ai-badge"><Bot size={10} /> AI</span>}
                   <span className="chat-msg-time">{formatTime(msg.createdAt)}</span>
                 </div>
-                <div className="chat-msg-content">{msg.content}</div>
+                <div className="chat-msg-content">
+                  {isAI ? <ReactMarkdown>{msg.content}</ReactMarkdown> : msg.content}
+                </div>
               </div>
             </div>
           );

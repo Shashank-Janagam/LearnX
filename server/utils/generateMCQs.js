@@ -199,51 +199,42 @@ export async function generateMCQs(topic, count, profileData,difficulty = 'easy'
   const { name, education, stats, recentQuizzes } = profileData;
 
   const prompt = `
-You are an intelligent quiz generator for a personalized learning platform called LearnX.
+You are a precision quiz generator for a personalized learning platform called LearnX.
 
-Generate "${count}" multiple-choice questions (MCQs) on the topic "${topic}" based on the following student's profile:
-from 
-Introductory
+Generate exactly "${count}" multiple-choice questions (MCQs) on the topic "${topic}".
+Difficulty: ${difficulty} (scale: introductory → basic → intermediate → advanced → expert)
 
-Basic
+Student context:
+- Name: ${name}
+- Degree: ${education?.degree || 'Not specified'}, Course: ${education?.course || 'Not specified'}
+- Institution: ${education?.institution || 'Not specified'}, Role: ${education?.role || 'Student'}
+- Quizzes taken: ${stats?.totalQuizzes || 0}, Avg score: ${stats?.averageScore || 0}%
+- Recent topics: ${JSON.stringify(recentQuizzes?.map(q => q.topic) || [])}
 
-Intermediate
+━━━ DISTRACTOR RULES (CRITICAL) ━━━
+1. Every wrong option MUST be a specific exact value/statement — NEVER vague (e.g., NOT "a larger number" or "a different approach").
+2. Design each distractor to exploit a REAL common misconception or confusion point:
+   - Off-by-one or boundary errors (e.g., O(n) vs O(n-1))
+   - Swapped terminology (e.g., stack vs queue)
+   - Plausible-but-wrong formulas/values
+   - Correct concept applied to wrong context
+3. A student who has partial knowledge should find at least 2 options tempting.
+4. Never use "None of the above" or "All of the above".
 
-Advanced
+━━━ EXPLANATION RULES ━━━
+- The explanation must: (a) state exactly why the correct answer is right, AND (b) briefly debunk at least one specific wrong option by name.
 
-Expert
-
-difficulty: ${difficulty} choosen by user
-
-Student Name: ${name}
-Degree: ${education?.degree || 'Not specified'}
-Course: ${education?.course || 'Not specified'}
-Institution: ${education?.institution || 'Not specified'}
-Country: India
-Role: ${education?.role || 'Student'}
-Total Quizzes Taken: ${stats?.totalQuizzes || 0}
-Average Score: ${stats?.averageScore || 0}%
-Most Recent Topic Attempted: ${stats?.recentTopic || 'None'}
-Recent Quizzes attempted: ${JSON.stringify(recentQuizzes || [])}
-
-Instructions:
-- Focus on fundamental and practical understanding suitable for a student with this background.
-- Questions should gradually increase in difficulty.
-- Use simple language but ensure conceptual depth.
-- Avoid repeating previous recent topics.
-- Add short, helpful explanations for correct answers.
-
-Output the MCQs in this exact JSON format:
+Output ONLY a valid JSON array — no markdown, no extra text:
 [
   {
-    "question": "What is ...?",
+    "question": "...",
     "options": [
-      { "text": "Option A", "isCorrect": false },
-      { "text": "Option B", "isCorrect": true },
-      { "text": "Option C", "isCorrect": false },
-      { "text": "Option D", "isCorrect": false }
+      { "text": "Exact option A", "isCorrect": false },
+      { "text": "Exact option B", "isCorrect": true },
+      { "text": "Exact option C", "isCorrect": false },
+      { "text": "Exact option D", "isCorrect": false }
     ],
-    "explanation": "..."
+    "explanation": "[Correct answer] is right because [reason]. [Specific wrong option] is incorrect because [debunk]."
   }
 ]
 `;
@@ -441,5 +432,79 @@ ${conv}
   } catch (error) {
     console.error('❌ Error generating doubt chat response:', error.message);
     return '⚠️ Sorry, I could not process your question right now.';
+  }
+}
+
+export async function generateGroupMCQs(topic, count, difficulty = 'intermediate') {
+  const difficultyDesc = {
+    introductory: 'very basic recall and recognition questions suitable for beginners',
+    basic: 'fundamental concept questions with one clear correct answer',
+    intermediate: 'application and analysis questions requiring deeper understanding',
+    advanced: 'complex scenario-based questions with subtle distinctions between options',
+    expert: 'highly challenging questions involving edge cases, exceptions, and expert-level reasoning'
+  }[difficulty] || 'challenging application and analysis questions';
+
+  const prompt = `
+You are an expert competitive quiz generator for LearnX group challenges.
+
+Generate exactly ${count} challenging MCQs on the topic "${topic}".
+Difficulty: ${difficulty} — ${difficultyDesc}
+
+━━━ DISTRACTOR RULES (CRITICAL) ━━━
+1. Every wrong option MUST be a SPECIFIC, EXACT value/statement — never vague, never approximate.
+   ✅ GOOD: "O(n log n)", "TCP port 443", "the __init__ method", "False — immutable objects CAN be dictionary keys"
+   ❌ BAD: "a larger value", "a different method", "approximately correct"
+2. Each distractor must exploit a genuine common mistake:
+   - Swapped concepts that students commonly confuse
+   - Correct value/rule from a related but different context
+   - Exact wrong number from a common calculation error
+   - Exception to a rule stated as the rule itself
+3. At least 2 of the 3 wrong options should be tempting to a student with 40–70% knowledge.
+4. Never use "None of the above" or "All of the above".
+
+━━━ QUESTION TYPES — mix all of these ━━━
+- Direct concept: "What does X return when Y?"
+- Scenario-based: "Given this code/situation, what happens?"
+- Exception/edge case: "Which of the following is FALSE?"
+- Application: "Which approach correctly solves...?"
+- Misconception trap: Questions that reveal if students confuse two similar things
+
+━━━ EXPLANATION RULES ━━━
+- Must (a) explain exactly WHY the correct answer is right, AND (b) name and debunk at least one specific distractor.
+
+Output ONLY valid JSON — no markdown, no extra text:
+[
+  {
+    "question": "...",
+    "options": [
+      { "text": "Exact option A", "isCorrect": false },
+      { "text": "Exact option B", "isCorrect": true },
+      { "text": "Exact option C", "isCorrect": false },
+      { "text": "Exact option D", "isCorrect": false }
+    ],
+    "explanation": "[Correct answer] because [precise reason]. '[Wrong option X]' is a common mistake because [debunk]."
+  }
+]
+`;
+
+  try {
+    const text = await callGrok([{ role: 'user', content: prompt }]);
+
+    const start = text.indexOf('[');
+    const end = text.lastIndexOf(']');
+    if (start === -1 || end === -1) {
+      throw new Error('JSON array not found in model output');
+    }
+
+    let jsonString = text.substring(start, end + 1);
+    jsonString = jsonString
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      .replace(/"|"/g, '"');
+
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.error('❌ Error generating group MCQs:', error.message);
+    return [];
   }
 }

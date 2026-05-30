@@ -2,7 +2,9 @@ import Room from '../models/Room.js';
 import User from '../models/User.js';
 import Group from '../models/Group.js';
 import GroupMessage from '../models/GroupMessage.js';
-import { generateMCQs } from './generateMCQs.js';
+import LearningModule from '../models/LearningModule.js';
+import QuizResult from '../models/QuizResult.js';
+import { generateGroupMCQs } from './generateMCQs.js';
 import { generateGroupAIResponse } from './groupChatAI.js';
 
 // In-memory room state for active quizzes
@@ -101,21 +103,11 @@ export function initializeSocket(io) {
           return;
         }
 
-        // Get profile data for MCQ generation
-        const hostUser = await User.findById(room.host);
-        const profileData = {
-          name: hostUser.name,
-          education: hostUser.education,
-          stats: hostUser.stats,
-          recentQuizzes: hostUser.recentQuizzes
-        };
-
-        // Generate MCQs
-        console.log('🎯 Generating MCQs for room ' + roomCode + '...');
-        const mcqs = await generateMCQs(
+        // Generate challenging MCQs for group competition
+        console.log('🎯 Generating group MCQs for room ' + roomCode + '...');
+        const mcqs = await generateGroupMCQs(
           room.topic,
           room.config.count,
-          profileData,
           room.config.difficulty
         );
 
@@ -188,6 +180,41 @@ export function initializeSocket(io) {
           participant.total = mcqs.length;
           participant.completedAt = new Date();
           await room.save();
+        }
+
+        // Save detailed QuizResult for question-by-question responses
+        try {
+          const userObj = await User.findById(uid);
+          if (userObj) {
+            const reportText = `Multiplayer Room ${code} Quiz on ${room.topic}. Score: ${score}/${mcqs.length}`;
+            const responses = mcqs.map((mcq, idx) => {
+              const selectedIdx = answers[idx];
+              const selectedText = selectedIdx !== undefined ? mcq.options[selectedIdx]?.text : "No Answer";
+              const correctOptionObj = mcq.options.find(o => o.isCorrect);
+              const correctText = correctOptionObj ? correctOptionObj.text : "";
+              return {
+                question: mcq.question,
+                selectedOption: selectedText,
+                correctOption: correctText,
+                isCorrect: selectedIdx !== undefined ? !!mcq.options[selectedIdx]?.isCorrect : false,
+                explanation: mcq.explanation || ""
+              };
+            });
+
+            const quizResult = new QuizResult({
+              userID: uid,
+              email: userObj.email,
+              topic: room.topic + ' (Group)',
+              score: score,
+              total: mcqs.length,
+              report: reportText,
+              responses: responses,
+              createdAt: new Date()
+            });
+            await quizResult.save();
+          }
+        } catch (saveResErr) {
+          console.error('Failed to save QuizResult for room submit:', saveResErr.message);
         }
 
         activeRoom.submittedUsers.add(uid);
@@ -305,12 +332,102 @@ export function initializeSocket(io) {
               .lean();
             recentMessages.reverse();
 
+            // Fetch group study context details for the AI (Group level only, no individual personal stats)
+            let groupStatsContext = "";
+            try {
+              const memberIds = group.members.map(m => m.user);
+              const users = await User.find({ _id: { $in: memberIds } }).select('name username').lean();
+              
+              const roomCodes = group.rooms.map(r => r.roomCode);
+              const detailedRooms = await Room.find({ roomCode: { $in: roomCodes } }).lean();
+              const modules = await LearningModule.find({ group: group._id }).lean();
+
+              groupStatsContext = `Here is the current study progress, quizzes, and modules context for this group:\n\n=== MEMBERS ===\n`;
+              if (users.length === 0) {
+                groupStatsContext += `No members found.\n`;
+              } else {
+                users.forEach(u => {
+                  groupStatsContext += `- ${u.name} (@${u.username || 'user'})\n`;
+                });
+              }
+
+              groupStatsContext += `\n=== GROUP QUIZ ROOMS (ATTENDED IN THIS GROUP) ===\n`;
+              if (detailedRooms.length === 0) {
+                groupStatsContext += `No quiz rooms have been created in this group yet.\n`;
+              } else {
+                detailedRooms.forEach(rm => {
+                  groupStatsContext += `- Room ${rm.roomCode} (Topic: "${rm.topic}", Status: ${rm.status})\n`;
+                  if (rm.participants && rm.participants.length > 0) {
+                    groupStatsContext += `  * Participants & Scores:\n`;
+                    rm.participants.forEach(p => {
+                      groupStatsContext += `    - ${p.name} (@${p.username || 'user'}): ${p.score}/${p.total} correct\n`;
+                    });
+                  } else {
+                    groupStatsContext += `  * No participants recorded yet.\n`;
+                  }
+                });
+              }
+
+              groupStatsContext += `\n=== MODULES & PROGRESS ===\n`;
+              if (modules.length === 0) {
+                groupStatsContext += `No modules created for this group yet.\n`;
+              } else {
+                modules.forEach(m => {
+                  groupStatsContext += `- Module: "${m.title}" (Topic: "${m.topic}", Status: ${m.status || 'active'}, Quizzes: ${m.totalQuizzes})\n`;
+                  if (m.progress && m.progress.length > 0) {
+                    groupStatsContext += `  * Member Progress:\n`;
+                    m.progress.forEach(p => {
+                      const completedCount = p.completedQuizzes ? p.completedQuizzes.length : 0;
+                      groupStatsContext += `    - ${p.userName}: ${completedCount}/${m.totalQuizzes} quizzes done (Overall score: ${p.overallScore}%, Punctuality: ${p.punctualityRate}%)\n`;
+                    });
+                  } else {
+                    groupStatsContext += `  * No progress registered yet.\n`;
+                  }
+                });
+              }
+
+              // Query recent QuizResults for this group's members on group-relevant topics to extract wrong attempts
+              const groupTopics = [
+                ...detailedRooms.map(rm => rm.topic + ' (Group)'),
+                ...modules.map(m => m.topic)
+              ];
+              const recentResults = await QuizResult.find({
+                userID: { $in: memberIds },
+                topic: { $in: groupTopics }
+              }).sort({ createdAt: -1 }).limit(10).lean();
+
+              groupStatsContext += `\n=== WRONGLY ATTEMPTED QUESTIONS IN RECENT GROUP QUIZZES ===\n`;
+              if (recentResults.length === 0) {
+                groupStatsContext += `No recent wrong answers recorded in this group.\n`;
+              } else {
+                recentResults.forEach(res => {
+                  const userName = users.find(u => u._id.toString() === res.userID.toString())?.name || 'A member';
+                  const wrongAnswers = res.responses.filter(r => !r.isCorrect);
+                  if (wrongAnswers.length > 0) {
+                    groupStatsContext += `- Quiz: "${res.topic}", User: ${userName} (Score: ${res.score}/${res.total}):\n`;
+                    wrongAnswers.slice(0, 3).forEach((wa, wIdx) => {
+                      groupStatsContext += `  * Missed Question ${wIdx+1}: "${wa.question}"\n`;
+                      groupStatsContext += `    - Selected/Chosen Answer: "${wa.selectedOption || 'None'}"\n`;
+                      groupStatsContext += `    - Correct Answer: "${wa.correctOption}"\n`;
+                      if (wa.explanation) {
+                        groupStatsContext += `    - Explanation: "${wa.explanation}"\n`;
+                      }
+                    });
+                  }
+                });
+              }
+            } catch (err) {
+              console.error('Error compiling group stats context:', err);
+              groupStatsContext = "Could not fetch group quiz and module details.";
+            }
+
             // Generate AI response
             const aiResponse = await generateGroupAIResponse(
               aiQuery,
               recentMessages,
               group.name,
-              user.name
+              user.name,
+              groupStatsContext
             );
 
             // Save AI message
@@ -384,6 +501,16 @@ async function completeRoom(io, roomCode) {
     room.completedAt = new Date();
     await room.save();
 
+    // Also sync status in the Group subdocument so the rooms tab shows it correctly
+    try {
+      await Group.updateOne(
+        { 'rooms.roomCode': roomCode },
+        { $set: { 'rooms.$.status': 'completed' } }
+      );
+    } catch (syncErr) {
+      console.warn('Could not sync group room status:', syncErr.message);
+    }
+
     // Build leaderboard
     const leaderboard = room.participants
       .sort((a, b) => {
@@ -407,6 +534,40 @@ async function completeRoom(io, roomCode) {
       }));
 
     io.to(roomCode).emit('room:completed', { leaderboard, topic: room.topic });
+
+    // ── Save group quiz scores to each participant's profile ──
+    try {
+      const today = new Date().toLocaleDateString('en-IN');
+      await Promise.all(
+        room.participants.map(async (p) => {
+          try {
+            const user = await User.findById(p.user);
+            if (!user) return;
+            const percentage = p.total > 0 ? Math.round((p.score / p.total) * 100) : 0;
+            const newQuiz = {
+              topic: room.topic + ' (Group)',
+              score: percentage,
+              date: today
+            };
+            user.recentQuizzes.push(newQuiz);
+            if (user.recentQuizzes.length > 3) {
+              user.recentQuizzes = user.recentQuizzes.slice(-3);
+            }
+            user.stats.totalQuizzes = (user.stats.totalQuizzes || 0) + 1;
+            user.stats.averageScore = Math.round(
+              user.recentQuizzes.reduce((sum, q) => sum + q.score, 0) / user.recentQuizzes.length
+            );
+            user.stats.recentTopic = room.topic;
+            await user.save();
+          } catch (userErr) {
+            console.error('Failed to update profile for user', p.user, userErr.message);
+          }
+        })
+      );
+      console.log('📊 Updated profiles for', room.participants.length, 'participants in room', roomCode);
+    } catch (profileErr) {
+      console.error('Profile update batch error:', profileErr.message);
+    }
 
     // Cleanup
     activeRooms.delete(roomCode);

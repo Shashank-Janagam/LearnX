@@ -109,20 +109,28 @@ function SearchUsers() {
 
   const renderUserCard = (user, showFollowBtn = true) => (
     <div key={user._id} className="user-card">
-      <div className="user-avatar">
+      <div
+        className="user-avatar"
+        style={{ cursor: 'pointer' }}
+        onClick={() => navigate(`/profile/${user._id}`)}
+      >
         {(user.name || 'U').charAt(0).toUpperCase()}
       </div>
-      <div className="user-info">
+      <div
+        className="user-info"
+        style={{ cursor: 'pointer', flex: 1 }}
+        onClick={() => navigate(`/profile/${user._id}`)}
+      >
         <span className="user-name">{user.name}</span>
         {user.username && <span className="user-username">@{user.username}</span>}
       </div>
       {showFollowBtn && (
         user.isFollowing ? (
-          <button className="follow-btn following" onClick={() => handleUnfollow(user._id)}>
+          <button className="follow-btn following" onClick={(e) => { e.stopPropagation(); handleUnfollow(user._id); }}>
             <UserMinus size={14} /> Unfollow
           </button>
         ) : (
-          <button className="follow-btn" onClick={() => handleFollow(user._id)}>
+          <button className="follow-btn" onClick={(e) => { e.stopPropagation(); handleFollow(user._id); }}>
             <UserPlus size={14} /> Follow
           </button>
         )

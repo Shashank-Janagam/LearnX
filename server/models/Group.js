@@ -52,6 +52,7 @@ const groupSchema = new mongoose.Schema({
   rooms: [{
     roomCode: String,
     topic: String,
+    description: { type: String, default: '' },
     postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     postedByName: String,
     postedAt: { type: Date, default: Date.now },

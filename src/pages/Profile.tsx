@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Mail, Award, BarChart3, Clock, Settings, Lock, Edit3,
-  BookOpen, Trophy, Target, Users, AtSign
+  BookOpen, Trophy, Target, Users, AtSign, Hash
 } from 'lucide-react';
 const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
@@ -147,6 +147,21 @@ function ProfilePage() {
                     <div className="learnx-info-item"><Mail className="learnx-icon-sm" /><span>{profileData.email}</span></div>
                     {profileData.username && (
                       <div className="learnx-info-item"><AtSign className="learnx-icon-sm" /><span>@{profileData.username}</span></div>
+                    )}
+                    {profileData.displayId && (
+                      <div className="learnx-info-item">
+                        <Hash className="learnx-icon-sm" />
+                        <span style={{
+                          fontFamily: 'monospace',
+                          background: 'rgba(124,58,237,0.1)',
+                          color: '#a78bfa',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          letterSpacing: '0.05em',
+                          border: '1px solid rgba(124,58,237,0.2)'
+                        }}>{profileData.displayId}</span>
+                      </div>
                     )}
                     <div className="learnx-info-item"><Award className="learnx-icon-sm" /><span className="learnx-role-badge">{profileData.education?.role || 'Student'}</span></div>
                   </div>

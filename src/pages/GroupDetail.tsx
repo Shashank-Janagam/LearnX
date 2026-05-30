@@ -7,7 +7,7 @@ import '../styles/Groups.css';
 import GroupChat from './GroupChat.tsx';
 import {
   ArrowLeft, MessageCircle, BookOpen, Users, Plus, Copy, Check,
-  LogOut, Clock, User, Sparkles, Shield
+  LogOut, Clock, User, Sparkles, Shield, Trophy, X
 } from 'lucide-react';
 
 const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
@@ -39,9 +39,17 @@ function GroupDetail() {
   // Post room modal
   const [showPostRoom, setShowPostRoom] = useState(false);
   const [roomTopic, setRoomTopic] = useState('');
+  const [roomDescription, setRoomDescription] = useState('');
   const [roomConfig, setRoomConfig] = useState({ count: 5, timeLimit: 300, difficulty: 'easy' });
   const [postingRoom, setPostingRoom] = useState(false);
   const [error, setError] = useState('');
+
+  // Results modal
+  const [showResults, setShowResults] = useState(false);
+  const [resultsData, setResultsData] = useState<any>(null);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [resultsError, setResultsError] = useState('');
+  const [resultsTab, setResultsTab] = useState<'leaderboard' | 'questions'>('leaderboard');
 
   // Copy code
   const [copied, setCopied] = useState(false);
@@ -180,10 +188,12 @@ function GroupDetail() {
       const res = await axios.post(`${HOST_SERVER}/api/groups/${groupCode}/post-room`, {
         userID,
         topic: roomTopic.trim(),
+        description: roomDescription.trim(),
         config: roomConfig
       });
       setShowPostRoom(false);
       setRoomTopic('');
+      setRoomDescription('');
       // Navigate to the collab quiz
       navigate(`/collab/${res.data.roomCode}`, {
         state: { roomCode: res.data.roomCode, userID, isHost: true }
@@ -192,6 +202,25 @@ function GroupDetail() {
       setError(err.response?.data?.error || 'Failed to post room');
     } finally {
       setPostingRoom(false);
+    }
+  };
+
+  // Fetch completed room results
+  const fetchRoomResults = async (roomCode: string) => {
+    setResultsLoading(true);
+    setResultsData(null);
+    setResultsError('');
+    setResultsTab('leaderboard');
+    setShowResults(true);
+    try {
+      const res = await axios.get(`${HOST_SERVER}/api/groups/${groupCode}/rooms/${roomCode}/results`);
+      setResultsData(res.data);
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message || 'Failed to load results';
+      setResultsError(msg);
+      console.error('Failed to fetch results:', err.response?.data || err.message);
+    } finally {
+      setResultsLoading(false);
     }
   };
 
@@ -371,6 +400,11 @@ function GroupDetail() {
                       <span className="room-item-topic">{room.topic}</span>
                       <span className={`room-item-status ${room.status}`}>{room.status}</span>
                     </div>
+                    {room.description && (
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0' }}>
+                        {room.description}
+                      </p>
+                    )}
                     <div className="room-item-meta">
                       <span><User size={13} /> {room.postedByName}</span>
                       <span><Clock size={13} /> {formatTime(room.postedAt)}</span>
@@ -385,6 +419,16 @@ function GroupDetail() {
                       >
                         <Sparkles size={14} />
                         Join Room
+                      </button>
+                    )}
+                    {room.status === 'completed' && (
+                      <button
+                        className="room-join-btn"
+                        style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+                        onClick={() => fetchRoomResults(room.roomCode)}
+                      >
+                        <Trophy size={14} />
+                        View Results
                       </button>
                     )}
                   </div>
@@ -415,10 +459,19 @@ function GroupDetail() {
               <div className="member-list">
                 {members.map((member) => (
                   <div key={member._id} className="member-item">
-                    <div className="member-avatar">
+                    <div
+                      className="member-avatar"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => member._id !== userID && navigate(`/profile/${member._id}`)}
+                      title={member._id !== userID ? 'View profile' : 'Your profile'}
+                    >
                       {getInitials(member.name)}
                     </div>
-                    <div className="member-info">
+                    <div
+                      className="member-info"
+                      style={{ cursor: member._id !== userID ? 'pointer' : 'default', flex: 1 }}
+                      onClick={() => member._id !== userID && navigate(`/profile/${member._id}`)}
+                    >
                       <div className="member-name">{member.name}</div>
                       {member.username && (
                         <div className="member-username">@{member.username}</div>
@@ -509,6 +562,18 @@ function GroupDetail() {
                 placeholder="e.g., Data Structures, Machine Learning..."
                 value={roomTopic}
                 onChange={e => setRoomTopic(e.target.value)}
+              />
+            </div>
+
+            <div className="groups-input-group">
+              <label>Description <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+              <textarea
+                className="groups-input groups-textarea"
+                placeholder="What should participants focus on? Any context for the quiz..."
+                value={roomDescription}
+                onChange={e => setRoomDescription(e.target.value)}
+                maxLength={200}
+                rows={2}
               />
             </div>
 
@@ -606,6 +671,159 @@ function GroupDetail() {
                 {creatingModule ? <><div className="btn-spinner" /> Generating...</> : 'Generate Study Path'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results Modal */}
+      {showResults && (
+        <div className="modal-overlay" onClick={() => setShowResults(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px', width: '96vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexShrink: 0 }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>
+                <Trophy size={18} style={{ color: '#fbbf24', marginRight: '8px', verticalAlign: 'middle' }} />
+                {resultsData?.topic || 'Quiz Results'}
+                {resultsData?.completedAt && (
+                  <small style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: '10px', fontSize: '0.75rem' }}>
+                    · {formatTime(resultsData.completedAt)}
+                  </small>
+                )}
+              </h2>
+              <button onClick={() => setShowResults(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {resultsLoading ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <div className="btn-spinner" style={{ margin: '0 auto 0.75rem' }} /> Loading results...
+              </div>
+            ) : resultsData ? (
+              <>
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '1rem', background: 'var(--bg-secondary, #161b22)', borderRadius: '10px', padding: '4px', flexShrink: 0 }}>
+                  {(['leaderboard', 'questions'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setResultsTab(tab)}
+                      style={{
+                        flex: 1, padding: '8px', border: 'none', borderRadius: '8px', cursor: 'pointer',
+                        fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s',
+                        background: resultsTab === tab ? 'rgba(139,92,246,0.25)' : 'transparent',
+                        color: resultsTab === tab ? '#c084fc' : 'var(--text-muted)'
+                      }}
+                    >
+                      {tab === 'leaderboard' ? `🏆 Leaderboard (${resultsData.leaderboard.length})` : `📋 Questions (${resultsData.questions?.length || 0})`}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Scrollable content */}
+                <div style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
+
+                  {/* ─── LEADERBOARD TAB ─── */}
+                  {resultsTab === 'leaderboard' && (
+                    resultsData.leaderboard.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No participant data yet.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {resultsData.leaderboard.map((entry: any, i: number) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: 'grid', gridTemplateColumns: '40px 1fr 80px 70px',
+                              alignItems: 'center', padding: '10px 14px',
+                              background: entry.userId === userID ? 'rgba(139,92,246,0.1)' : 'var(--bg-tertiary, #21262d)',
+                              borderRadius: '10px',
+                              border: entry.userId === userID ? '1px solid rgba(139,92,246,0.3)' : '1px solid transparent',
+                              cursor: entry.userId !== userID ? 'pointer' : 'default'
+                            }}
+                            onClick={() => entry.userId !== userID && navigate(`/profile/${entry.userId}`)}
+                          >
+                            <span style={{ fontSize: '1.1rem' }}>
+                              {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+                            </span>
+                            <span style={{ fontWeight: 500 }}>
+                              {entry.name}
+                              {entry.username && <small style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>@{entry.username}</small>}
+                              {entry.userId === userID && <span style={{ background: 'rgba(139,92,246,0.2)', color: '#c084fc', fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>You</span>}
+                            </span>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{entry.score}/{entry.total}</span>
+                            <span style={{ fontWeight: 700, color: '#c084fc' }}>{entry.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  )}
+
+                  {/* ─── QUESTIONS TAB ─── */}
+                  {resultsTab === 'questions' && (
+                    !resultsData.questions || resultsData.questions.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Question data not available for this room.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {resultsData.questions.map((q: any, qi: number) => {
+                          const correctOption = q.options?.find((o: any) => o.isCorrect);
+                          const letters = ['A', 'B', 'C', 'D'];
+                          return (
+                            <div key={qi} style={{ background: 'var(--bg-tertiary, #21262d)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)' }}>
+                              {/* Question */}
+                              <div style={{ display: 'flex', gap: '10px', marginBottom: '0.75rem' }}>
+                                <span style={{ background: 'rgba(139,92,246,0.2)', color: '#c084fc', borderRadius: '6px', padding: '2px 9px', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, alignSelf: 'flex-start', marginTop: '2px' }}>
+                                  Q{q.index}
+                                </span>
+                                <p style={{ margin: 0, fontWeight: 500, lineHeight: 1.5, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{q.question}</p>
+                              </div>
+
+                              {/* Options */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: q.explanation ? '0.75rem' : 0 }}>
+                                {q.options?.map((opt: any, oi: number) => (
+                                  <div
+                                    key={oi}
+                                    style={{
+                                      display: 'flex', alignItems: 'center', gap: '10px',
+                                      padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem',
+                                      background: opt.isCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
+                                      border: opt.isCorrect ? '1px solid rgba(34,197,94,0.45)' : '1px solid rgba(255,255,255,0.06)',
+                                      color: opt.isCorrect ? '#86efac' : '#9999bb'
+                                    }}
+                                  >
+                                    <span style={{
+                                      width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontSize: '0.72rem', fontWeight: 700,
+                                      background: opt.isCorrect ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.07)',
+                                      color: opt.isCorrect ? '#86efac' : '#777799'
+                                    }}>
+                                      {letters[oi]}
+                                    </span>
+                                    <span style={{ flex: 1 }}>{opt.text}</span>
+                                    {opt.isCorrect && <span style={{ fontSize: '0.75rem', color: '#86efac', fontWeight: 600 }}>✓ Correct</span>}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Explanation */}
+                              {q.explanation && (
+                                <div style={{ background: 'rgba(56,189,248,0.06)', borderLeft: '3px solid rgba(56,189,248,0.4)', borderRadius: '0 8px 8px 0', padding: '8px 12px', marginTop: '0.5rem' }}>
+                                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#7dd3fc', lineHeight: 1.5 }}>💡 {q.explanation}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )
+                  )}
+                </div>
+              </>
+            ) : (
+              <p style={{ color: resultsError ? '#fca5a5' : 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+                {resultsError || 'Failed to load results.'}
+              </p>
+            )}
           </div>
         </div>
       )}
