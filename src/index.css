@@ -246,3 +246,106 @@ html:not(.dark) .leaderboard-table td {
 html:not(.dark) .highlight-self {
   background-color: var(--accent-glow) !important;
 }
+
+/* CollabQuiz light mode fixes */
+html:not(.dark) .collab-quiz-container {
+  background: var(--gradient-bg) !important;
+  color: var(--text-primary) !important;
+}
+html:not(.dark) .question-card {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+html:not(.dark) .question-text {
+  color: var(--text-primary) !important;
+}
+html:not(.dark) .option-button {
+  background: var(--bg-input) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+html:not(.dark) .option-button:hover:not(:disabled) {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+html:not(.dark) .option-button.selected {
+  background: rgba(79,70,229,0.08) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+html:not(.dark) .option-button.correct {
+  background: rgba(34,197,94,0.1) !important;
+  border-color: rgba(34,197,94,0.5) !important;
+  color: #15803d !important;
+}
+html:not(.dark) .option-button.incorrect {
+  background: rgba(239,68,68,0.08) !important;
+  border-color: rgba(239,68,68,0.4) !important;
+  color: #b91c1c !important;
+}
+html:not(.dark) .collab-q-header {
+  background: rgba(255,255,255,0.9) !important;
+  border-bottom-color: var(--border) !important;
+}
+html:not(.dark) .question-number,
+html:not(.dark) .room-badge {
+  background: rgba(79,70,229,0.08) !important;
+  border-color: rgba(79,70,229,0.2) !important;
+  color: var(--accent) !important;
+}
+html:not(.dark) .timer-badge {
+  background: rgba(56,189,248,0.08) !important;
+  border-color: rgba(56,189,248,0.3) !important;
+  color: #0369a1 !important;
+}
+html:not(.dark) .nav-key {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+html:not(.dark) .nav-key.active {
+  background: rgba(79,70,229,0.1) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+html:not(.dark) .nav-key.answered {
+  background: rgba(56,189,248,0.08) !important;
+  border-color: rgba(56,189,248,0.3) !important;
+  color: #0369a1 !important;
+}
+html:not(.dark) .nav-key.correct {
+  background: rgba(34,197,94,0.1) !important;
+  border-color: rgba(34,197,94,0.4) !important;
+  color: #15803d !important;
+}
+html:not(.dark) .nav-key.incorrect {
+  background: rgba(239,68,68,0.08) !important;
+  border-color: rgba(239,68,68,0.3) !important;
+  color: #b91c1c !important;
+}
+html:not(.dark) .control-btn {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+html:not(.dark) .leaderboard-table,
+html:not(.dark) .lb-header-row,
+html:not(.dark) .lb-row {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+html:not(.dark) .participant-card {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+}
+html:not(.dark) .waiting-room .room-code-box {
+  background: var(--bg-secondary) !important;
+  border-color: var(--accent) !important;
+}
+html:not(.dark) .config-summary span {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}

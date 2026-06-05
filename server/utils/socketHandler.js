@@ -497,6 +497,54 @@ async function completeRoom(io, roomCode) {
     const room = await Room.findOne({ roomCode });
     if (!room || room.status === 'completed') return;
 
+    // Auto-submit for participants who never submitted (give them 0 score)
+    const activeRoom = activeRooms.get(roomCode);
+    const submittedUsers = activeRoom?.submittedUsers || new Set();
+
+    for (const participant of room.participants) {
+      const uid = participant.user.toString();
+      if (!submittedUsers.has(uid)) {
+        // Mark them as auto-submitted with 0 score
+        participant.score = 0;
+        participant.total = room.mcqs?.length || 0;
+        participant.completedAt = new Date();
+
+        // Save a QuizResult with no-answer responses
+        try {
+          const userObj = await User.findById(uid);
+          if (userObj && room.mcqs) {
+            const reportText = `Multiplayer Room ${roomCode} Quiz on ${room.topic}. Score: 0/${room.mcqs.length} (Auto-submitted on timeout)`;
+            const responses = room.mcqs.map((mcq) => {
+              const correctOptionObj = mcq.options.find(o => o.isCorrect);
+              return {
+                question: mcq.question,
+                selectedOption: 'No Answer',
+                correctOption: correctOptionObj ? correctOptionObj.text : '',
+                isCorrect: false,
+                explanation: mcq.explanation || ''
+              };
+            });
+
+            const quizResult = new QuizResult({
+              userID: uid,
+              email: userObj.email,
+              topic: room.topic + ' (Group)',
+              score: 0,
+              total: room.mcqs.length,
+              report: reportText,
+              responses: responses,
+              createdAt: new Date()
+            });
+            await quizResult.save();
+          }
+        } catch (autoSaveErr) {
+          console.error('Failed to auto-save QuizResult for timed-out user:', autoSaveErr.message);
+        }
+
+        console.log(`⏱️ Auto-submitted (timeout) for user ${uid} in room ${roomCode}`);
+      }
+    }
+
     room.status = 'completed';
     room.completedAt = new Date();
     await room.save();

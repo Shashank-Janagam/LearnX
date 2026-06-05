@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import '../styles/CollabQuiz.css';
-import { Users, Crown, Copy, Check, Trophy, Clock, ArrowLeft, Loader } from 'lucide-react';
+import { Users, Crown, Copy, Check, Trophy, Clock, ArrowLeft, Loader, BookOpen } from 'lucide-react';
 
 const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
@@ -27,6 +27,7 @@ function CollabQuiz() {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [autoSubmitted, setAutoSubmitted] = useState(false); // fired by timer
   const [submittedCount, setSubmittedCount] = useState(0);
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -104,9 +105,10 @@ function CollabQuiz() {
     };
   }, [roomCode, userID, navigate]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback((isAuto = false) => {
     if (submitted) return;
     setSubmitted(true);
+    if (isAuto) setAutoSubmitted(true);
     socketRef.current?.emit('room:submit', {
       roomCode,
       answers: selectedAnswers,
@@ -114,21 +116,32 @@ function CollabQuiz() {
     });
   }, [submitted, roomCode, selectedAnswers, userID]);
 
-  // Timer
+  // Keep an always-fresh ref to the submit handler so the interval doesn't go stale
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
+  // Single stable timer — does NOT re-run on every tick, avoids stale-closure bugs
   useEffect(() => {
     if (phase !== 'quiz' || timeLeft <= 0) return;
+
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (!submitted) handleSubmit();
           clearInterval(timer);
+          // Auto-submit with latest answers (ref is always current, pass isAuto=true)
+          handleSubmitRef.current(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [phase, timeLeft, submitted, handleSubmit]);
+    // Only run when quiz phase starts or timeLeft is set fresh from server
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, timeLeft > 0]);
 
   const handleStart = () => {
     setLoading(true);
@@ -247,12 +260,35 @@ function CollabQuiz() {
           </div>
           <div className="quiz-header-info">
             <span className="room-badge">Room: {roomCode}</span>
-            <span className={'timer-badge' + (timeLeft < 30 ? ' urgent' : '')}>
-              <Clock size={14} /> {formatTime(timeLeft)}
-            </span>
-            {submitted && <span className="submitted-badge">✓ Submitted</span>}
+            {timeLeft > 0 && (
+              <span className={'timer-badge' + (timeLeft < 30 ? ' urgent' : '')}>
+                <Clock size={14} /> {formatTime(timeLeft)}
+              </span>
+            )}
+            {submitted && !autoSubmitted && <span className="submitted-badge">✓ Submitted</span>}
+            {autoSubmitted && <span className="submitted-badge" style={{ background: 'rgba(251,146,60,0.15)', borderColor: 'rgba(251,146,60,0.4)', color: '#fb923c' }}>⏱ Auto-submitted</span>}
           </div>
         </header>
+
+        {/* Auto-submitted banner */}
+        {autoSubmitted && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(251,146,60,0.12), rgba(239,68,68,0.08))',
+            border: '1px solid rgba(251,146,60,0.3)',
+            borderRadius: '10px',
+            padding: '10px 20px',
+            margin: '0.75rem 1.5rem 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#fb923c',
+            fontSize: '0.88rem',
+            fontWeight: 600
+          }}>
+            <span style={{ fontSize: '1.1rem' }}>⏱</span>
+            Time's Up! Your selected answers were automatically submitted.
+          </div>
+        )}
 
         <main className="collab-q-main quiz-phase">
           {/* Progress bar */}
@@ -367,9 +403,21 @@ function CollabQuiz() {
           </div>
 
           {submitted && (
-            <div className="waiting-results">
-              <Loader size={20} className="spin-icon" />
-              <span>Your score: {score}/{mcqs.length} — Waiting for others to finish...</span>
+            <div className={`waiting-results${autoSubmitted ? ' auto-submitted' : ''}`}>
+              {autoSubmitted ? (
+                <>
+                  <span style={{ fontSize: '1.2rem' }}>⏱</span>
+                  <span>
+                    Time's up! Score: <strong>{score}/{mcqs.length}</strong> answered
+                    &nbsp;&mdash;&nbsp;Waiting for the leaderboard...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Loader size={20} className="spin-icon" />
+                  <span>Your score: <strong>{score}/{mcqs.length}</strong> — Waiting for others to finish...</span>
+                </>
+              )}
             </div>
           )}
         </main>
@@ -472,12 +520,71 @@ function CollabQuiz() {
           ))}
         </div>
 
+        {/* Question Review Section */}
+        {mcqs.length > 0 && (
+          <div className="quiz-review-section">
+            <h2 className="review-title">
+              <BookOpen size={20} className="review-title-icon" />
+              Review Questions
+            </h2>
+            <div className="review-cards-list">
+              {mcqs.map((q, qIndex) => {
+                const selectedOptIdx = selectedAnswers[qIndex];
+                const isAnswered = selectedOptIdx !== undefined;
+                const isCorrect = isAnswered && q.options[selectedOptIdx]?.isCorrect;
+
+                return (
+                  <div key={qIndex} className={`review-card ${isAnswered ? (isCorrect ? 'correct-border' : 'incorrect-border') : 'unanswered-border'}`}>
+                    <div className="review-card-header">
+                      <span className="review-question-number">Question {qIndex + 1} of {mcqs.length}</span>
+                      <span className={`review-badge ${isAnswered ? (isCorrect ? 'correct' : 'incorrect') : 'unanswered'}`}>
+                        {isAnswered ? (isCorrect ? '✓ Correct' : '✗ Incorrect') : '⏱ Unanswered'}
+                      </span>
+                    </div>
+
+                    <h3 className="review-question-text">{q.question}</h3>
+
+                    <div className="review-options-list">
+                      {q.options.map((opt, oIndex) => {
+                        const isSelected = selectedOptIdx === oIndex;
+                        const isCorrectOpt = opt.isCorrect;
+
+                        let optClass = 'review-option-item';
+                        if (isCorrectOpt) optClass += ' correct';
+                        else if (isSelected && !isCorrectOpt) optClass += ' incorrect';
+
+                        return (
+                          <div key={oIndex} className={optClass}>
+                            <span className="review-option-letter">{String.fromCharCode(65 + oIndex)}</span>
+                            <span className="review-option-text">{opt.text}</span>
+                            {isCorrectOpt && <span className="review-option-status-badge correct-text">✓ Correct Answer</span>}
+                            {isSelected && !isCorrectOpt && <span className="review-option-status-badge incorrect-text">✗ Your Answer</span>}
+                            {isSelected && isCorrectOpt && <span className="review-option-status-badge correct-text">✓ Your Answer</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {q.explanation && (
+                      <div className="review-explanation-section">
+                        <p className="review-explanation-text">
+                          💡 <strong>Explanation:</strong> {q.explanation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="lb-actions">
           <button className="collab-btn primary" onClick={() => navigate('/collab')}>
             Play Again
           </button>
-          <button className="collab-btn secondary" onClick={() => navigate('/Home')}>
-            <ArrowLeft size={16} /> Home
+          <button className="collab-btn secondary" onClick={() => navigate('/groups')}>
+            <ArrowLeft size={16} /> Back to Groups
           </button>
         </div>
       </main>

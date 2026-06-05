@@ -11,7 +11,7 @@ import historyRoutes from './routes/history.js';
 import profileRoutes from './routes/profileRoutes.js';
 import socialRoutes from './routes/socialRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
-import groupRoutes from './routes/groupRoutes.js';
+import createGroupRouter from './routes/groupRoutes.js';
 import moduleRoutes from './routes/moduleRoutes.js';
 import { initializeSocket } from './utils/socketHandler.js';
 import { startModuleScheduler } from './utils/moduleScheduler.js';
@@ -50,7 +50,6 @@ app.use('/history', historyRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/social', socialRoutes);
 app.use('/api/rooms', roomRoutes);
-app.use('/api/groups', groupRoutes);
 app.use('/api/modules', moduleRoutes);
 
 // Create HTTP server and attach Socket.io
@@ -64,6 +63,10 @@ const io = new SocketServer(httpServer, {
 
 // Initialize Socket.io handler
 initializeSocket(io);
+
+// Register group routes after io is initialized (needs io for real-time room posting)
+app.use('/api/groups', createGroupRouter(io));
+
 
 // MongoDB connection
 const mongoURI = process.env.MONGO_URI;

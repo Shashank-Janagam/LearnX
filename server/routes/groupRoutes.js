@@ -3,8 +3,10 @@ import Group from '../models/Group.js';
 import GroupMessage from '../models/GroupMessage.js';
 import Room from '../models/Room.js';
 import User from '../models/User.js';
+import QuizResult from '../models/QuizResult.js';
 
-const router = express.Router();
+export default function createGroupRouter(io) {
+  const router = express.Router();
 
 // Generate a random 8-character group code
 function generateGroupCode() {
@@ -328,6 +330,22 @@ router.post('/:code/post-room', async (req, res) => {
       },
       postedByName: user.name
     });
+
+    // Emit real-time event so all group members see the new room instantly
+    const newRoomPayload = {
+      roomCode,
+      topic,
+      description: description?.trim() || '',
+      postedBy: userID,
+      postedByName: user.name,
+      postedAt: new Date(),
+      config: room.config,
+      status: 'waiting',
+      participantCount: 1
+    };
+    if (io) {
+      io.to(`group:${req.params.code.toUpperCase()}`).emit('group:room-posted', newRoomPayload);
+    }
   } catch (err) {
     console.error('Post room error:', err);
     res.status(500).json({ error: 'Failed to post room to group' });
@@ -385,6 +403,7 @@ router.get('/:code/rooms', async (req, res) => {
 
 // ─── GET COMPLETED ROOM RESULTS (leaderboard + questions) ───
 router.get('/:code/rooms/:roomCode/results', async (req, res) => {
+  const { userID } = req.query;
   try {
     const group = await Group.findOne({ code: req.params.code.toUpperCase() });
     if (!group) return res.status(404).json({ error: 'Group not found' });
@@ -411,12 +430,36 @@ router.get('/:code/rooms/:roomCode/results', async (req, res) => {
         percentage: p.total > 0 ? Math.round((p.score / p.total) * 100) : 0
       }));
 
-    // Return questions with correct answers revealed
+    // Try to fetch the requesting user's per-question answers from QuizResult
+    let userAnswersMap = {}; // questionIndex (0-based) -> { selectedOption, isCorrect }
+    if (userID) {
+      try {
+        const topicPattern = new RegExp('^' + room.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(Group\\)$', 'i');
+        const quizResult = await QuizResult.findOne({
+          userID,
+          topic: topicPattern
+        }).sort({ createdAt: -1 });
+        if (quizResult && quizResult.responses) {
+          quizResult.responses.forEach((r, idx) => {
+            userAnswersMap[idx] = {
+              selectedOption: r.selectedOption,
+              isCorrect: r.isCorrect
+            };
+          });
+        }
+      } catch (qrErr) {
+        console.warn('Could not fetch user QuizResult:', qrErr.message);
+      }
+    }
+
+    // Return questions with correct answers revealed + user's selected answers
     const questions = (room.mcqs || []).map((q, i) => ({
       index: i + 1,
       question: q.question,
       options: q.options,          // includes isCorrect
-      explanation: q.explanation
+      explanation: q.explanation,
+      userSelectedOption: userAnswersMap[i]?.selectedOption || null,
+      userIsCorrect: userAnswersMap[i]?.isCorrect ?? null
     }));
 
     res.json({
@@ -509,4 +552,5 @@ router.delete('/:code/remove-member', async (req, res) => {
   }
 });
 
-export default router;
+  return router;
+}

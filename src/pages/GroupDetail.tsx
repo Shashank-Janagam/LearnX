@@ -60,14 +60,22 @@ function GroupDetail() {
     if (!sessionStorage.getItem('userEmail')) navigate('/');
   }, [navigate]);
 
-  // Initialize socket
+  // Initialize socket and join the group socket room for real-time updates
   useEffect(() => {
     const s = io(HOST_SERVER);
     setSocket(s);
+
+    s.on('connect', () => {
+      // Join the group socket room so we receive group:room-posted events
+      // even when not on the Chat tab (GroupChat also joins but only when rendered)
+      s.emit('group:join-chat', { groupCode, userID });
+    });
+
     return () => {
+      s.emit('group:leave-chat', { groupCode });
       s.disconnect();
     };
-  }, []);
+  }, [groupCode, userID]);
 
   // Fetch group details
   useEffect(() => {
@@ -87,7 +95,7 @@ function GroupDetail() {
     fetchGroup();
   }, [groupCode, navigate]);
 
-  // Fetch rooms when tab changes
+  // Fetch content when tab changes
   useEffect(() => {
     if (activeTab === 'rooms') fetchRooms();
     if (activeTab === 'members') fetchMembers();
@@ -102,11 +110,15 @@ function GroupDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group]);
 
-  // Listen for new rooms via socket
+  // Listen for new rooms via socket (real-time room posting)
   useEffect(() => {
     if (!socket) return;
     const handleRoomPosted = (room) => {
-      setRooms(prev => [room, ...prev]);
+      setRooms(prev => {
+        // Avoid duplicate if already exists
+        if (prev.some(r => r.roomCode === room.roomCode)) return prev;
+        return [room, ...prev];
+      });
     };
     socket.on('group:room-posted', handleRoomPosted);
     return () => socket.off('group:room-posted', handleRoomPosted);
@@ -213,7 +225,9 @@ function GroupDetail() {
     setResultsTab('leaderboard');
     setShowResults(true);
     try {
-      const res = await axios.get(`${HOST_SERVER}/api/groups/${groupCode}/rooms/${roomCode}/results`);
+      const res = await axios.get(`${HOST_SERVER}/api/groups/${groupCode}/rooms/${roomCode}/results`, {
+        params: { userID }
+      });
       setResultsData(res.data);
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Failed to load results';
@@ -763,51 +777,68 @@ function GroupDetail() {
                     !resultsData.questions || resultsData.questions.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Question data not available for this room.</p>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div className="history-questions-list">
                         {resultsData.questions.map((q: any, qi: number) => {
                           const letters = ['A', 'B', 'C', 'D'];
+                          const userSelected = q.userSelectedOption;
+                          const userIsCorrect = q.userIsCorrect;
                           return (
-                            <div key={qi} style={{ background: 'var(--bg-tertiary, #21262d)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)' }}>
-                              {/* Question */}
-                              <div style={{ display: 'flex', gap: '10px', marginBottom: '0.75rem' }}>
-                                <span style={{ background: 'rgba(139,92,246,0.2)', color: '#c084fc', borderRadius: '6px', padding: '2px 9px', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, alignSelf: 'flex-start', marginTop: '2px' }}>
+                            <div
+                              key={qi}
+                              className={`history-question-card ${
+                                userSelected
+                                  ? (userIsCorrect ? 'correct-border' : 'incorrect-border')
+                                  : 'unanswered-border'
+                              }`}
+                            >
+                              {/* Question header with result badge */}
+                              <div className="history-question-header">
+                                <span className="history-question-number">
                                   Q{q.index}
                                 </span>
-                                <p style={{ margin: 0, fontWeight: 500, lineHeight: 1.5, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{q.question}</p>
+                                <p className="history-question-text">{q.question}</p>
+                                {userSelected && (
+                                  <span className={`history-result-badge ${userIsCorrect ? 'correct' : 'incorrect'}`}>
+                                    {userIsCorrect ? '✓ Correct' : '✗ Wrong'}
+                                  </span>
+                                )}
                               </div>
 
                               {/* Options */}
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: q.explanation ? '0.75rem' : 0 }}>
-                                {q.options?.map((opt: any, oi: number) => (
-                                  <div
-                                    key={oi}
-                                    style={{
-                                      display: 'flex', alignItems: 'center', gap: '10px',
-                                      padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem',
-                                      background: opt.isCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
-                                      border: opt.isCorrect ? '1px solid rgba(34,197,94,0.45)' : '1px solid rgba(255,255,255,0.06)',
-                                      color: opt.isCorrect ? '#86efac' : '#9999bb'
-                                    }}
-                                  >
-                                    <span style={{
-                                      width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                      fontSize: '0.72rem', fontWeight: 700,
-                                      background: opt.isCorrect ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.07)',
-                                      color: opt.isCorrect ? '#86efac' : '#777799'
-                                    }}>
-                                      {letters[oi]}
-                                    </span>
-                                    <span style={{ flex: 1 }}>{opt.text}</span>
-                                    {opt.isCorrect && <span style={{ fontSize: '0.75rem', color: '#86efac', fontWeight: 600 }}>✓ Correct</span>}
-                                  </div>
-                                ))}
+                              <div className={`history-options-list ${q.explanation ? 'has-explanation' : ''}`}>
+                                {q.options?.map((opt: any, oi: number) => {
+                                  const isUserAnswer = userSelected && opt.text === userSelected;
+                                  const isCorrectOpt = opt.isCorrect;
+
+                                  let optClass = 'history-option-item';
+                                  if (isCorrectOpt) optClass += ' correct';
+                                  else if (isUserAnswer && !isCorrectOpt) optClass += ' incorrect';
+
+                                  return (
+                                    <div key={oi} className={optClass}>
+                                      <span className="history-option-letter">
+                                        {letters[oi]}
+                                      </span>
+                                      <span className="history-option-text">{opt.text}</span>
+                                      {isCorrectOpt && <span className="history-option-status-badge correct-text">✓ Correct</span>}
+                                      {isUserAnswer && !isCorrectOpt && <span className="history-option-status-badge incorrect-text">✗ Your Answer</span>}
+                                      {isUserAnswer && isCorrectOpt && <span className="history-option-status-badge correct-text">✓ Your Answer</span>}
+                                    </div>
+                                  );
+                                })}
                               </div>
+
+                              {/* No answer indicator */}
+                              {!userSelected && (
+                                <div className="history-no-answer">
+                                  ⏱ You did not answer this question
+                                </div>
+                              )}
 
                               {/* Explanation */}
                               {q.explanation && (
-                                <div style={{ background: 'rgba(56,189,248,0.06)', borderLeft: '3px solid rgba(56,189,248,0.4)', borderRadius: '0 8px 8px 0', padding: '8px 12px', marginTop: '0.5rem' }}>
-                                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#7dd3fc', lineHeight: 1.5 }}>💡 {q.explanation}</p>
+                                <div className="history-explanation-section">
+                                  <p className="history-explanation-text">💡 {q.explanation}</p>
                                 </div>
                               )}
                             </div>
