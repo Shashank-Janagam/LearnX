@@ -126,8 +126,9 @@ function CollabQuiz() {
   }, [handleSubmit]);
 
   // Single stable timer — does NOT re-run on every tick, avoids stale-closure bugs
+  const isQuizActive = phase === 'quiz' && timeLeft > 0;
   useEffect(() => {
-    if (phase !== 'quiz' || timeLeft <= 0) return;
+    if (!isQuizActive) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -142,7 +143,7 @@ function CollabQuiz() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [phase, timeLeft > 0]);
+  }, [isQuizActive]);
 
   const email = sessionStorage.getItem('userEmail') || '';
   useEffect(() => {
