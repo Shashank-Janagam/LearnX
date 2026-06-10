@@ -169,26 +169,43 @@ async function callGrok(messages) {
   const model = process.env.LLM_MODEL || (apiKey.startsWith('gsk_') ? 'llama-3.3-70b-versatile' : 'grok-2-latest');
   console.log(`⚡ API key detected. Routing to ${apiKey.startsWith('gsk_') ? 'Groq' : 'xAI'} using model: ${model}`);
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      messages: messages,
-      model: model,
-      temperature: 0.3
-    })
-  });
+  let retries = 3;
+  let delay = 2000;
 
-  if (!response.ok) {
-    const errorData = await response.text();
-    throw new Error(`AI API error (${response.status}): ${errorData}`);
+  while (retries > 0) {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        messages: messages,
+        model: model,
+        temperature: 0.3
+      })
+    });
+
+    if (response.status === 429) {
+      retries--;
+      if (retries === 0) {
+        const errorData = await response.text();
+        throw new Error(`AI API error (${response.status}): ${errorData}`);
+      }
+      console.warn(`⚠️ Rate limited (429). Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 2;
+      continue;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`AI API error (${response.status}): ${errorData}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
   }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
 }
 
 export async function generateMCQs(topic, count, profileData,difficulty = 'easy') {
@@ -257,6 +274,7 @@ JSON format:
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
     if (start === -1 || end === -1) {
+      console.error("Grok Raw Output:", text);
       throw new Error('🛑 JSON array not found in the model output');
     }
 
@@ -266,9 +284,15 @@ JSON format:
       .replace(/,\s*]/g, ']')
       .replace(/“|”/g, '"');
 
-    return JSON.parse(jsonString);
+    try {
+      return JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error("Grok Raw Output:", text);
+      console.error("Grok Trimmed JSON String:", jsonString);
+      throw parseError;
+    }
   } catch (error) {
-    console.error('❌ Error generating MCQs from Grok:', error.message);
+    console.error('❌ Error generating MCQs from Grok:', error);
     return [];
   }
 }
@@ -521,6 +545,7 @@ JSON format:
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
     if (start === -1 || end === -1) {
+      console.error("Group Grok Raw Output:", text);
       throw new Error('JSON array not found in model output');
     }
 
@@ -530,9 +555,15 @@ JSON format:
       .replace(/,\s*]/g, ']')
       .replace(/"|"/g, '"');
 
-    return JSON.parse(jsonString);
+    try {
+      return JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error("Group Grok Raw Output:", text);
+      console.error("Group Grok Trimmed JSON String:", jsonString);
+      throw parseError;
+    }
   } catch (error) {
-    console.error('❌ Error generating group MCQs:', error.message);
+    console.error('❌ Error generating group MCQs:', error);
     return [];
   }
 }

@@ -13,26 +13,43 @@ async function callGrok(messages) {
   }
   const model = process.env.LLM_MODEL || (apiKey.startsWith('gsk_') ? 'llama-3.3-70b-versatile' : 'grok-2-latest');
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      messages: messages,
-      model: model,
-      temperature: 0.3
-    })
-  });
+  let retries = 3;
+  let delay = 2000;
 
-  if (!response.ok) {
-    const errorData = await response.text();
-    throw new Error(`AI API error (${response.status}): ${errorData}`);
+  while (retries > 0) {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        messages: messages,
+        model: model,
+        temperature: 0.3
+      })
+    });
+
+    if (response.status === 429) {
+      retries--;
+      if (retries === 0) {
+        const errorData = await response.text();
+        throw new Error(`AI API error (${response.status}): ${errorData}`);
+      }
+      console.warn(`⚠️ Rate limited (429). Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 2;
+      continue;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`AI API error (${response.status}): ${errorData}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
   }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
 }
 
 export async function generateLearningPlan(topic, profileData) {
