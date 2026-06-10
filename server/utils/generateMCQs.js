@@ -163,15 +163,11 @@ async function callGrok(messages) {
   }
   
   let endpoint = 'https://api.x.ai/v1/chat/completions';
-  let model = 'grok-2-latest';
-  
   if (apiKey.startsWith('gsk_')) {
     endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-    model = 'llama-3.3-70b-versatile';
-    console.log('⚡ Groq API key detected. Routing to Groq using model: llama-3.3-70b-versatile');
-  } else {
-    console.log('⚡ xAI API key detected. Routing to xAI using model: grok-2-latest');
   }
+  const model = process.env.LLM_MODEL || (apiKey.startsWith('gsk_') ? 'llama-3.3-70b-versatile' : 'grok-2-latest');
+  console.log(`⚡ API key detected. Routing to ${apiKey.startsWith('gsk_') ? 'Groq' : 'xAI'} using model: ${model}`);
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -182,7 +178,7 @@ async function callGrok(messages) {
     body: JSON.stringify({
       messages: messages,
       model: model,
-      temperature: 0.7
+      temperature: 0.3
     })
   });
 
@@ -198,9 +194,15 @@ async function callGrok(messages) {
 export async function generateMCQs(topic, count, profileData,difficulty = 'easy') {
   const { name, education, stats, recentQuizzes } = profileData;
 
-  const prompt = `
-You are a precision quiz generator for a personalized learning platform called LearnX.
+  const systemMsg = `You are a factually rigorous quiz generator. You MUST follow these absolute rules:
+1. ACCURACY IS NON-NEGOTIABLE: Every question, every correct answer, and every explanation MUST be 100% factually correct and verifiable.
+2. NEVER fabricate facts, statistics, dates, names, formulas, or definitions. If you are not certain about a fact, do NOT include it.
+3. ONLY ONE correct answer per question. The correct answer must be indisputably right — not "mostly right" or "arguably right".
+4. Every wrong option must be definitively wrong — not ambiguous or debatable.
+5. SELF-VERIFY: Before outputting, mentally verify each correct answer. Ask yourself: "Is this provably true?" If there is any doubt, replace the question.
+6. Output ONLY valid JSON — no markdown, no extra text.`;
 
+  const prompt = `
 Generate exactly "${count}" multiple-choice questions (MCQs) on the topic "${topic}".
 Difficulty: ${difficulty} (scale: introductory → basic → intermediate → advanced → expert)
 
@@ -211,7 +213,14 @@ Student context:
 - Quizzes taken: ${stats?.totalQuizzes || 0}, Avg score: ${stats?.averageScore || 0}%
 - Recent topics: ${JSON.stringify(recentQuizzes?.map(q => q.topic) || [])}
 
-━━━ DISTRACTOR RULES (CRITICAL) ━━━
+━━━ FACTUAL ACCURACY (HIGHEST PRIORITY) ━━━
+1. Every correct answer MUST be an established, well-known fact — not an opinion, approximation, or AI-generated "fact".
+2. Do NOT generate questions about obscure trivia that could be wrong. Stick to textbook-level, universally accepted knowledge.
+3. For numerical answers (dates, values, counts), double-check the exact number before marking it correct.
+4. For code-related questions, mentally trace the execution to verify the output.
+5. If a question could have multiple valid interpretations, rewrite it to be unambiguous.
+
+━━━ DISTRACTOR RULES ━━━
 1. Every wrong option MUST be a specific exact value/statement — NEVER vague (e.g., NOT "a larger number" or "a different approach").
 2. Design each distractor to exploit a REAL common misconception or confusion point:
    - Off-by-one or boundary errors (e.g., O(n) vs O(n-1))
@@ -222,9 +231,9 @@ Student context:
 4. Never use "None of the above" or "All of the above".
 
 ━━━ EXPLANATION RULES ━━━
-- The explanation must: (a) state exactly why the correct answer is right, AND (b) briefly debunk at least one specific wrong option by name.
+- The explanation must: (a) state exactly why the correct answer is right with a clear factual basis, AND (b) briefly debunk at least one specific wrong option by name.
 
-Output ONLY a valid JSON array — no markdown, no extra text:
+JSON format:
 [
   {
     "question": "...",
@@ -240,7 +249,10 @@ Output ONLY a valid JSON array — no markdown, no extra text:
 `;
 
   try {
-    const text = await callGrok([{ role: 'user', content: prompt }]);
+    const text = await callGrok([
+      { role: 'system', content: systemMsg },
+      { role: 'user', content: prompt }
+    ]);
 
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
@@ -444,13 +456,26 @@ export async function generateGroupMCQs(topic, count, difficulty = 'intermediate
     expert: 'highly challenging questions involving edge cases, exceptions, and expert-level reasoning'
   }[difficulty] || 'challenging application and analysis questions';
 
-  const prompt = `
-You are an expert competitive quiz generator for LearnX group challenges.
+  const systemMsg = `You are a factually rigorous quiz generator for competitive group challenges. You MUST follow these absolute rules:
+1. ACCURACY IS NON-NEGOTIABLE: Every question, every correct answer, and every explanation MUST be 100% factually correct and verifiable.
+2. NEVER fabricate facts, statistics, dates, names, formulas, or definitions. If you are not certain about a fact, do NOT include it.
+3. ONLY ONE correct answer per question. The correct answer must be indisputably right.
+4. Every wrong option must be definitively wrong — not ambiguous or debatable.
+5. SELF-VERIFY: Before outputting, mentally verify each correct answer. Ask yourself: "Is this provably true?" If there is any doubt, replace the question.
+6. Output ONLY valid JSON — no markdown, no extra text.`;
 
+  const prompt = `
 Generate exactly ${count} challenging MCQs on the topic "${topic}".
 Difficulty: ${difficulty} — ${difficultyDesc}
 
-━━━ DISTRACTOR RULES (CRITICAL) ━━━
+━━━ FACTUAL ACCURACY (HIGHEST PRIORITY) ━━━
+1. Every correct answer MUST be an established, well-known fact — not an opinion, approximation, or AI-generated "fact".
+2. Do NOT generate questions about obscure trivia that could be wrong. Stick to textbook-level, universally accepted knowledge.
+3. For numerical answers (dates, values, counts), double-check the exact number before marking it correct.
+4. For code-related questions, mentally trace the execution to verify the output.
+5. If a question could have multiple valid interpretations, rewrite it to be unambiguous.
+
+━━━ DISTRACTOR RULES ━━━
 1. Every wrong option MUST be a SPECIFIC, EXACT value/statement — never vague, never approximate.
    ✅ GOOD: "O(n log n)", "TCP port 443", "the __init__ method", "False — immutable objects CAN be dictionary keys"
    ❌ BAD: "a larger value", "a different method", "approximately correct"
@@ -470,9 +495,9 @@ Difficulty: ${difficulty} — ${difficultyDesc}
 - Misconception trap: Questions that reveal if students confuse two similar things
 
 ━━━ EXPLANATION RULES ━━━
-- Must (a) explain exactly WHY the correct answer is right, AND (b) name and debunk at least one specific distractor.
+- Must (a) explain exactly WHY the correct answer is right with a clear factual basis, AND (b) name and debunk at least one specific distractor.
 
-Output ONLY valid JSON — no markdown, no extra text:
+JSON format:
 [
   {
     "question": "...",
@@ -488,7 +513,10 @@ Output ONLY valid JSON — no markdown, no extra text:
 `;
 
   try {
-    const text = await callGrok([{ role: 'user', content: prompt }]);
+    const text = await callGrok([
+      { role: 'system', content: systemMsg },
+      { role: 'user', content: prompt }
+    ]);
 
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');

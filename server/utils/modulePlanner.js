@@ -8,12 +8,10 @@ async function callGrok(messages) {
   }
   
   let endpoint = 'https://api.x.ai/v1/chat/completions';
-  let model = 'grok-2-latest';
-  
   if (apiKey.startsWith('gsk_')) {
     endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-    model = 'llama-3.3-70b-versatile';
   }
+  const model = process.env.LLM_MODEL || (apiKey.startsWith('gsk_') ? 'llama-3.3-70b-versatile' : 'grok-2-latest');
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -24,7 +22,7 @@ async function callGrok(messages) {
     body: JSON.stringify({
       messages: messages,
       model: model,
-      temperature: 0.7
+      temperature: 0.3
     })
   });
 

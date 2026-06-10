@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import '../styles/CollabQuiz.css';
-import { Users, Crown, Copy, Check, Trophy, Clock, ArrowLeft, Loader, BookOpen } from 'lucide-react';
+import { Users, Crown, Copy, Check, Trophy, Clock, ArrowLeft, Loader, BookOpen, Search } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const HOST_SERVER = process.env.REACT_APP_HOST_SERVER;
 
@@ -35,6 +36,8 @@ function CollabQuiz() {
   // Leaderboard
   const [leaderboard, setLeaderboard] = useState([]);
   const [quizTopic, setQuizTopic] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
 
   useEffect(() => {
     if (!sessionStorage.getItem('userEmail')) {
@@ -139,9 +142,26 @@ function CollabQuiz() {
     }, 1000);
 
     return () => clearInterval(timer);
-    // Only run when quiz phase starts or timeLeft is set fresh from server
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, timeLeft > 0]);
+
+  const email = sessionStorage.getItem('userEmail') || '';
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(`${HOST_SERVER}/api/profile/email/${encodeURIComponent(email)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProfileData(data);
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    if (email) {
+      fetchProfile();
+    }
+  }, [email]);
 
   const handleStart = () => {
     setLoading(true);
@@ -173,6 +193,30 @@ function CollabQuiz() {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return m + ':' + String(s).padStart(2, '0');
+  };
+
+  // Build quiz result context for the AI doubt chat (available after submission in any phase)
+  const quizResponses = mcqs.map((mcq: any, index: number) => {
+    const selectedIndex = selectedAnswers[index];
+    const selectedOption = mcq.options[selectedIndex];
+    return {
+      question: mcq.question,
+      score: calculateScore(),
+      selectedOption: selectedOption?.text || '',
+      correctOption: mcq.options.find((opt: any) => opt.isCorrect)?.text || '',
+      explanation: mcq.explanation || '',
+      isCorrect: selectedOption?.isCorrect || false,
+    };
+  });
+
+  const quizResultContext = {
+    topic: quizTopic || roomInfo?.topic || '',
+    score: calculateScore(),
+    total: mcqs.length,
+    responses: quizResponses,
+    time: roomInfo?.config?.timeLimit || 300,
+    timeLeft: 0,
+    profileData
   };
 
   // ===== WAITING ROOM =====
@@ -268,6 +312,13 @@ function CollabQuiz() {
             {submitted && !autoSubmitted && <span className="submitted-badge">✓ Submitted</span>}
             {autoSubmitted && <span className="submitted-badge" style={{ background: 'rgba(251,146,60,0.15)', borderColor: 'rgba(251,146,60,0.4)', color: '#fb923c' }}>⏱ Auto-submitted</span>}
           </div>
+          {submitted && !isChatOpen && (
+            <button className="ai-launch-btn" aria-label="Open AI Chat" onClick={() => setIsChatOpen(true)}>
+              <span className="icon">🤖</span>
+              <span className="label">Ask AI</span>
+              <span className="dot"></span>
+            </button>
+          )}
         </header>
 
         {/* Auto-submitted banner */}
@@ -421,17 +472,32 @@ function CollabQuiz() {
             </div>
           )}
         </main>
+        {submitted && (
+          <DoubtChat
+            quizData={quizResultContext}
+            isChatOpen={isChatOpen}
+            setIsChatOpen={setIsChatOpen}
+          />
+        )}
       </div>
     );
   }
 
   // ===== LEADERBOARD =====
+
   return (
     <div className="collab-quiz-container">
       <header className="collab-q-header">
         <div className="logo-container" onClick={() => navigate('/Home')}>
           <div className="logo-icon"><span className="logo-text">LearnX</span></div>
         </div>
+        {phase === 'leaderboard' && !isChatOpen && (
+          <button className="ai-launch-btn" aria-label="Open AI Chat" onClick={() => setIsChatOpen(true)}>
+            <span className="icon">🤖</span>
+            <span className="label">Ask AI</span>
+            <span className="dot"></span> 
+          </button>
+        )}
         <span className="room-badge">Room: {roomCode}</span>
       </header>
 
@@ -588,8 +654,148 @@ function CollabQuiz() {
           </button>
         </div>
       </main>
+      <DoubtChat
+        quizData={quizResultContext}
+        isChatOpen={isChatOpen}
+        setIsChatOpen={setIsChatOpen}
+      />
     </div>
   );
 }
 
+interface DoubtChatProps {
+  quizData: any;
+  isChatOpen: boolean;
+  setIsChatOpen: (open: boolean) => void;
+}
+
+const DoubtChat = ({ quizData, isChatOpen, setIsChatOpen }: DoubtChatProps) => {
+  const chatRef = useRef<HTMLDivElement>(null);
+  const [chat, setChat] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const handleDoubt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chat.trim() || loading) return;
+
+    const newUserMessage = { role: 'user', content: chat.trim() };
+    const updatedMessages = [...messages, newUserMessage];
+
+    setMessages(updatedMessages);
+    setChat('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${HOST_SERVER}/quiz/grok-doubt-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updatedMessages, userMcqs: quizData }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error: ${res.status} - ${text}`);
+      }
+
+      const data = await res.json();
+      const aiMessage = { role: 'assistant', content: data.content };
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (err: any) {
+      console.error('❌ Fetch error:', err.message);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Sorry, could not reach the AI tutor right now. Try again!' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isChatOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isChatOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatRef.current && !chatRef.current.contains(e.target as Node)) {
+        setIsChatOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [setIsChatOpen]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  return (
+    <>
+      <div
+        ref={chatRef}
+        className={`history-sidebar ${isChatOpen ? 'open' : ''}`}
+      >
+        <div className="logos">
+          <div className="sidebar-header-row">
+            <div className="logo-container" id="slider">
+              <div className="logo-icon">
+                <span className="logo-text">LearnX</span>
+              </div>
+            </div>
+            <h2 className="history-title">AI Doubt Session</h2>
+            <button className="close-sidebar-btn" onClick={() => setIsChatOpen(false)}>×</button>
+          </div>
+
+          <div className="chat-wrapper">
+            <div className="chat-messages">
+              {messages.length === 0 && (
+                <div className="empty-chat-state">
+                  <p>Ask questions about any concepts or incorrect answers in this quiz. The AI tutor has full context of your quiz performance! 🧠</p>
+                </div>
+              )}
+              {messages.map((msg, index) => (
+                <div key={index} className={`msg ${msg.role === 'user' ? 'user-msg' : 'bot-msg'}`}>
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              ))}
+              {loading && (
+                <div className="msg bot-msg thinking-msg">
+                  <span className="thinking-dots">Thinking</span>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+            <form className="doubt-chat-form" onSubmit={handleDoubt}>
+              <div className="doubt-chat-wrapper">
+                <input
+                  type="text"
+                  value={chat}
+                  onChange={(e) => setChat(e.target.value)}
+                  placeholder="Ask a Doubt or Explore a Topic"
+                  className="doubt-chat-input"
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  className="doubt-chat-submit"
+                  disabled={!chat.trim() || loading}
+                >
+                  <Search className="doubt-chat-search-icon" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 export default CollabQuiz;
+
